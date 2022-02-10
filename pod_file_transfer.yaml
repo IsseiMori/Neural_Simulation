@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imori-pod-file-transfer # replace with "${USER_NAME}-{POD_NAME}"
+  namespace: ucsd-haosulab
+spec:
+  containers:
+    - name: gpu-container
+      image: centos:centos7
+      # imagePullPolicy: Always
+      args: ["sleep", "infinity"]
+      resources:
+        limits:
+          memory: 100Mi
+          cpu: 100m
+        requests:
+          memory: 100Mi
+          cpu: 100m
+      volumeMounts:
+        - name: imori-fast-vol
+          mountPath: /imori-fast-vol
+  volumes:
+    - name: imori-fast-vol
+      persistentVolumeClaim:
+        claimName: imori-fast-vol
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nautilus.io/group
+                operator: In
+                values:
+                  - haosu
+              - key: gpu-type
+                operator: In
+                values:
+                  - 1080Ti
+                  - 2080Ti
