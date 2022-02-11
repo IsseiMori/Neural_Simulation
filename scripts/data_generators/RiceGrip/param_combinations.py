@@ -12,14 +12,14 @@ import matplotlib.pyplot as plt
 
 
 dt = 1. / 60.
-des_dir = 'RiceGrip'
+des_dir = 'Params'
 os.system('mkdir -p ' + des_dir)
 
 # n_particles = 768
 # n_shapes = 2
 # n_rigidPositions = 2613
 # n_rigids = 4
-# np.random.seed(0)
+np.random.seed(5)
 
 grip_time = 1
 time_step = 40
@@ -120,8 +120,20 @@ use_gpu = torch.cuda.is_available()
 def rand_float(lo, hi):
     return np.random.rand() * (hi - lo) + lo
 
+params_list = [
+    [0.5, 0.00025, 0.2],
+    [0.3, 0.00025, 0.2],
+    [0.7, 0.00025, 0.2],
+    [0.5, 0.00001, 0.2],
+    [0.5, 0.0005, 0.2],
+    [0.5, 0.00025, 0.1],
+    [0.5, 0.00025, 0.3]
+]
 
-for data_i in range(0, 5000):
+
+gripper_config = sample_gripper_config()
+
+for data_i in range(0, 7):
 
     ### set scene
     # x, y, z: [8.0, 10.0]
@@ -135,6 +147,10 @@ for data_i in range(0, 5000):
     # clusterPlasticThreshold = rand_float(0.000004, 0.0001)
     clusterPlasticThreshold = rand_float(0.00001, 0.0005)
     clusterPlasticCreep = rand_float(0.1, 0.3)
+
+    clusterStiffness = params_list[data_i][0]
+    clusterPlasticThreshold = params_list[data_i][1]
+    clusterPlasticCreep = params_list[data_i][2]
 
     # clusterStiffness = 0.7
     # clusterPlasticThreshold = 0.1
@@ -200,7 +216,7 @@ for data_i in range(0, 5000):
         return np.dot(R, p)
 
     for r in range(grip_time):
-        gripper_config = sample_gripper_config()
+        # gripper_config = sample_gripper_config()
         # gripper_config = saved[r]
         # print(gripper_config)
         for i in range(time_step):
@@ -281,7 +297,7 @@ for data_i in range(0, 5000):
         'clusterPlasticCreep': clusterPlasticCreep
         }
 
-    with open('RiceGrip/{:0>4}.npy'.format(str(data_i)), 'wb') as f:
+    with open(des_dir + '/{:0>4}.npy'.format(str(data_i)), 'wb') as f:
         np.save(f, states)
 
 
