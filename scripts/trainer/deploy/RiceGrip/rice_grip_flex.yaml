@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: imori-graphnet-job-rice-grip-flex
+  namespace: ucsd-haosulab
+  labels:
+    user: imori
+spec:
+  ttlSecondsAfterFinished: 86400  # Wait one day to delete completed jobs
+  template:
+    metadata:
+      labels:
+        nautilus.io/sim: "true"
+    spec:
+      containers:
+        - name: gpu-container
+          image: gitlab-registry.nrp-nautilus.io/imori/cuda_py37_torch_geom_env:latest
+          # imagePullPolicy: Always
+          command:
+            - "bash"
+          args: [ "-c", "export PATH=/root/anaconda3/bin:$PATH; source ~/anaconda3/etc/profile.d/conda.sh; source activate; conda activate py37pyg; mkdir -R /imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/models; mkdir -R /imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/rollouts; cd /imori-fast-vol/Neural_Simulation/scripts/trainer; LD_PRELOAD='/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4' python train.py --data_path=/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/data --model_path=/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/models --output_path=/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/rollouts --eval_steps=100000 --num_eval_steps=1000 --save_steps=10000 --rollout_steps=100000 --num_steps=4000000 --dim=6;" ]
+          resources:
+            requests:
+              cpu: "1"
+              memory: "8Gi"
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "2"
+              memory: "8Gi"
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: imori-fast-vol
+              mountPath: /imori-fast-vol
+      volumes:
+        - name: imori-fast-vol
+          persistentVolumeClaim:
+            claimName: imori-fast-vol
+      restartPolicy: Never
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nautilus.io/group
+                    operator: In
+                    values:
+                      - haosu
+                  - key: gpu-type
+                    operator: In
+                    values:
+                      - 2080Ti
