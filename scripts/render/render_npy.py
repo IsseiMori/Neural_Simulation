@@ -22,20 +22,24 @@ import vispy_utils
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--data", help="data path", required=True, type=str,
-)
+parser.add_argument("--data", help="data path", required=True, type=str)
+parser.add_argument("--restpos", help="has rest pos in positions?", action='store_true')
 args = parser.parse_args()
-
 
 images = []
 data = []
 
 files = glob.glob(args.data)
 
+# half_edge = np.array([0.15, 0.8, 0.15])
+half_edge = np.array([0.033, 0.2, 0.033])
+
 for file in files:
     d = np.load(file, allow_pickle=True).item()
-    d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,3:] , d['shape_states'])[:,:,:,:3]
+    if args.restpos: 
+        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,3:] , d['shape_states'], half_edge)[:,:,:,:3]
+    else:
+        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,:3] , d['shape_states'], half_edge)[:,:,:,:3]
     data.append(d)
 
 c = vispy.scene.SceneCanvas(keys='interactive', show=True, bgcolor='white')
@@ -72,11 +76,11 @@ def update(event):
     data_i = math.floor(frame / seq_length)
     frame_i = frame % seq_length
     ppos = data[data_i]['new_positions'][0, frame_i].astype(np.float32) - np.array([0, 0, 0])
-    ppos[:,0] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[0]
-    ppos[:,2] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[2]
-    ppos /= 5
-    ppos[:,0] += 0.5
-    ppos[:,2] += 0.5
+    # ppos[:,0] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[0]
+    # ppos[:,2] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[2]
+    # ppos /= 5
+    # ppos[:,0] += 0.5
+    # ppos[:,2] += 0.5
     p1.set_data(ppos, edge_color='black', face_color='white')
 
     img = c.render()
@@ -91,7 +95,7 @@ def update(event):
 # start animation
 timer = app.Timer()
 timer.connect(update)
-timer.start(interval=1. / 3., iterations=len(data) * len(data[0]['positions'][0]))
+timer.start(interval=1. / 30., iterations=len(data) * len(data[0]['positions'][0]))
 
 c.show()
 app.run()
@@ -104,12 +108,61 @@ out = cv2.VideoWriter(
     out_name,
     fourcc, 30, (800, 600))
 
-for i in range(total_frames):
-    img = images[i]
-    frame = np.zeros((600, 800, 3), dtype=np.uint8)
-    frame[:, :] = img.astype(np.uint8)[:,:,0:3]
-    # frame = cv2.putText(frame, "YS = " + str(data[datan][0]['state'][1]), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-    out.write(frame)
+# for i in range(total_frames):
+#     data_i = math.floor(i / seq_length)
+#     img = images[i]
+#     frame = np.zeros((600, 800, 3), dtype=np.uint8)
+#     frame[:, :] = img.astype(np.uint8)[:,:,0:3]
+#     # frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[data_i]['clusterStiffness']), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     # frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[data_i]['clusterPlasticThreshold']), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     # frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[data_i]['clusterPlasticCreep']), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     frame = cv2.putText(frame, 'E = {:f}'.format(data[data_i]['E']), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     frame = cv2.putText(frame, 'YS = {:f}'.format(data[data_i]['YS']), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     frame = cv2.putText(frame, 'nu = {:f}'.format(data[data_i]['nu']), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        
+    
+
+#     # frame = cv2.putText(frame, "YS = " + str(data[datan][0]['state'][1]), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#     out.write(frame)
+# out.release()
+
+
+fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+out_name = (args.data + ".avi").replace("*", "all")
+out = cv2.VideoWriter(
+    out_name,
+    fourcc, 30, (800*2, 600))
+
+for i in range(1, len(data)):
+    for j in range(seq_length):
+        data_frame = seq_length * i + j
+
+        img_gt = images[j]
+        img_pd = images[data_frame]
+
+        frame = np.zeros((600, 800 * 2, 3), dtype=np.uint8)
+        frame[:, :800] = img_gt.astype(np.uint8)[:,:,0:3]
+        frame[:, 800:] = img_pd.astype(np.uint8)[:,:,0:3]
+
+        # frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[0]['clusterStiffness']), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        # frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[0]['clusterPlasticThreshold']), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        # frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[0]['clusterPlasticCreep']), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            
+        # frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[i]['clusterStiffness']), (800+30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        # frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[i]['clusterPlasticThreshold']), (800+30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        # frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[i]['clusterPlasticCreep']), (800+30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+        frame = cv2.putText(frame, 'E = {:f}'.format(data[0]['E']), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        frame = cv2.putText(frame, 'YS = {:f}'.format(data[0]['YS']), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        frame = cv2.putText(frame, 'nu = {:f}'.format(data[0]['nu']), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            
+        frame = cv2.putText(frame, 'E = {:f}'.format(data[i]['E']), (800+30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        frame = cv2.putText(frame, 'YS = {:f}'.format(data[i]['YS']), (800+30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        frame = cv2.putText(frame, 'nu = {:f}'.format(data[i]['nu']), (800+30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+
+        # frame = cv2.putText(frame, "YS = " + str(data[datan][0]['state'][1]), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        out.write(frame)
 out.release()
 
 

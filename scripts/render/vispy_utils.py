@@ -194,14 +194,11 @@ def particlify_box(center, half_edge, quat):
     
     return pos
 
-def add_grips(positions, shape_states):
+def add_grips(positions, shape_states, half_edge):
     pos_all = []
     for r in range(len(positions)):
         pos_grip_iter = []
         for i in range(len(positions[0])):
-
-            half_edge = np.array([0.15, 0.8, 0.15])
-            # half_edge = np.array([0.033, 0.2, 0.033])
 
             pos1 = shape_states[r, i][0][0:3]
             quat1 = shape_states[r, i][0][6:10]
