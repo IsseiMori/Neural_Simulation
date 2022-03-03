@@ -3,6 +3,8 @@
 ### Note
 Install PyFLEX in a directory close to the root as a path name that goes over 100 characters buffer will cause a buffer overflow error.
 
+
+On local
 ```bash
 conda install pybind11
 
@@ -17,7 +19,7 @@ docker run \
 
 ```
 
-
+Inside Docker env
 ```
 export PATH="/workspace/anaconda/bin:$PATH"
 cd /workspace/PyFleX
@@ -27,6 +29,7 @@ export LD_LIBRARY_PATH=${PYFLEXROOT}/external/SDL2-2.0.4/lib/x64:$LD_LIBRARY_PAT
 cd bindings; mkdir build; cd build; cmake ..; make -j
 ```
 
+Back to local
 ```
 cd PATH_TO_PyFleX
 export PYFLEXROOT=${PWD}
