@@ -53,19 +53,18 @@ new_verts = (
 # print(values.shape)
 
 
-mesh = trimesh.Trimesh(new_verts, faces)
-# mesh.show()
+mesh = trimesh.Trimesh(new_verts, faces)mesh.show()
 
 
-mesh = pyrender.Mesh.from_trimesh(mesh)
-scene = pyrender.Scene()
-scene.add(mesh)
-# pyrender.Viewer(scene, use_raymond_lighting=True)
+# mesh = pyrender.Mesh.from_trimesh(mesh)
+# scene = pyrender.Scene()
+# scene.add(mesh)
+# # pyrender.Viewer(scene, use_raymond_lighting=True)
 
-r = pyrender.OffscreenRenderer(viewport_width=640*2, viewport_height=480*2)
-color, depth = r.render(scene)
+# r = pyrender.OffscreenRenderer(viewport_width=640*2, viewport_height=480*2)
+# color, depth = r.render(scene)
 
-print(color)
+# print(color)
 
 
 # scene = mesh.scene()

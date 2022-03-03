@@ -30,9 +30,11 @@ STD_EPSILON = torch.FloatTensor([1e-8]).to(device)
 # output_path = "/imori-fast-vol/tmp/rollouts/RiceGrip/FLEX2/sysid"
 # pos_dim = 3
 
-data_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/predicted_data"
-model_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/models"
-output_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/sysid"
+root_dir = os.environ.get('NSIMROOT')
+
+data_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/predicted_data")
+model_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/models")
+output_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/sysid")
 pos_dim = 6
 
 with open(os.path.join(data_path, 'metadata.json'), 'rt') as f:
@@ -462,7 +464,7 @@ def eval_single_rollout(simulator, features, num_steps, device):
         # Update kinematic particles from prescribed trajectory
         kinematic_mask = (features['particle_type'] == 3).clone().detach().to(device)
         next_position_ground_truth = ground_truth_positions[:, step]
-        kinematic_mask = kinematic_mask.bool()[:, None].expand(-1, 3)
+        kinematic_mask = kinematic_mask.bool()[:, None].expand(-1, pos_dim)
         next_position = torch.where(kinematic_mask, next_position_ground_truth, next_position)
         predictions.append(next_position)
         current_positions = torch.cat([current_positions[:, 1:], next_position[:, None, :]], dim=1)
@@ -732,7 +734,8 @@ class SimulatorRolloutNet(torch.nn.Module):
         
         return loss, predictions, ground_truth_positions
 
-# infer(simulator, split='test')
+# infer(simulator, split='8')
+# exit()
 
 OPTIMIZATION_PATH = "rollouts"
 os.makedirs(OPTIMIZATION_PATH, exist_ok=True)
@@ -768,7 +771,7 @@ loss_vals = []
 if device == 'cuda':
     simulator.cuda()
 
-ds = prepare_data_from_tfds(data_path=data_path, split='7', is_rollout=True)
+ds = prepare_data_from_tfds(data_path=data_path, split='8', is_rollout=True)
 
 eval_loss = []
 
@@ -826,7 +829,7 @@ def save_depth_image(depth_data, file_name):
     data.save(file_name)
 
 
-num_inference_steps = 25
+num_inference_steps = 1
 
 
 print("Find true position")
@@ -894,8 +897,14 @@ for example_i, (features, labels) in enumerate(ds):
 
         n_kinetic_particles = len(features['particle_type'][features['particle_type'] == 1])
 
+        print(predictions.shape)
+
         points_predicted = predictions[-1,:n_kinetic_particles, 3:].float().contiguous() 
         depth_predicted = raster_func.apply(points_predicted)
+
+
+        points_ground_truth = ground_truth_positions[-1,:n_kinetic_particles, 3:].float().contiguous() 
+        depth_ground_truth = raster_func.apply(points_ground_truth)
 
 
 
@@ -944,6 +953,8 @@ for example_i, (features, labels) in enumerate(ds):
         if epoch == 0 or epoch % 10 == 0:
            save_optimization_rollout(features, predictions, ground_truth_positions, epoch, loss)
            save_depth_image(depth_predicted.to("cpu").detach().numpy(), 'images_flex/depth_predicted' + str(epoch) + '.png')
+           save_depth_image(depth_ground_truth.to("cpu").detach().numpy(), 'images_flex/depth_gt' + str(epoch) + '.png')
+
 
         # print(f'epoch={epoch}, ct0={'{:,5}'.format}, ct1={ct1}, ct2={ct2}, LossInt={loss_intersection}, LossIOU={(1.0 - loss_iou)}')
         print(f'epoch={epoch}, clusterStiffness={ct0:.5}, clusterPlasticThreshold={ct1:.5}, clusterPlasticCreep={ct2:.5}, LossInt={loss_intersection:.5}, LossIOU={(1.0 - loss_iou):.5}, Loss={loss:.5}')

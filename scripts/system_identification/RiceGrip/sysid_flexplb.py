@@ -32,10 +32,12 @@ STD_EPSILON = torch.FloatTensor([1e-8]).to(device)
 # model_path = "/imori-fast-vol/tmp/models/RiceGrip/FLEX2"
 # output_path = "/imori-fast-vol/tmp/rollouts/RiceGrip/FLEX2/sysid"
 
-data_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/predicted_data"
-mpm_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/mpm_data"
-model_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/models"
-output_path = "/imori-fast-vol/Neural_Simulation/tmp/FLEX_RiceGrip/sysid"
+root_dir = os.environ.get('NSIMROOT')
+
+data_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/predicted_data")
+mpm_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/mpm_data")
+model_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/models")
+output_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/sysid")
 pos_dim = 6
 
 
@@ -771,7 +773,7 @@ loss_vals = []
 if device == 'cuda':
     simulator.cuda()
 
-ds = prepare_data_from_tfds(data_path=data_path, split='1', is_rollout=True)
+ds = prepare_data_from_tfds(data_path=data_path, split='7', is_rollout=True)
 ds_mpm = prepare_data_from_tfds(data_path=mpm_path, split='4', is_rollout=True)
 
 eval_loss = []
@@ -871,7 +873,7 @@ for example_i, (features, labels) in enumerate(ds):
         print(features_mpm['position'].shape)
 
         # replace grip position data
-        features['position'][-360:, :27] = features_mpm['position'][-360:, :27]
+        # features['position'][-360:, :27] = features_mpm['position'][-360:, :27]
 
         features['step_context_true'] = features['step_context']
         
