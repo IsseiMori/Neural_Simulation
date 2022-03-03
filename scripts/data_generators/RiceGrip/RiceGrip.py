@@ -34,7 +34,7 @@ def sample_gripper_config():
     angle = np.random.rand() * np.pi * 2.
     x = np.cos(angle) * dis
     z = np.sin(angle) * dis
-    d = np.random.rand() * 0.3 + 0.7    # (0.6, 0.8)
+    d = np.random.rand() * 0.1 + 0.7    # (0.6, 0.8)
     return x, z, d
 
 def quatFromAxisAngle(axis, angle):
@@ -128,9 +128,9 @@ for data_i in range(0, 5000):
     # clusterStiffness: [0.4, 0.8]
     # clusterPlasticThreshold: [0.000005, 0.0001]
     # clusterPlasticCreep: [0.1, 0.3]
-    x = 8
-    y = 8
-    z = 8
+    x = 10
+    y = 10
+    z = 10
     clusterStiffness = rand_float(0.3, 0.7)
     # clusterPlasticThreshold = rand_float(0.000004, 0.0001)
     clusterPlasticThreshold = rand_float(0.00001, 0.0005)
