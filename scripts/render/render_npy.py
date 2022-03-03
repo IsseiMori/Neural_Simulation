@@ -37,7 +37,7 @@ data = []
 
 files = glob.glob(args.data)
 
-if args.mpm: half_edge = np.array([0.033, 0.2, 0.033])
+if args.mpm: half_edge = np.array([0.03, 0.16, 0.03])
 if args.flex: half_edge = np.array([0.15, 0.8, 0.15])
 
 
@@ -85,8 +85,6 @@ def update(event):
     ppos = data[data_i]['new_positions'][0, frame_i].astype(np.float32) - np.array([0, 0, 0])
 
     if args.flex:
-        ppos[:,0] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[0]
-        ppos[:,2] -= data[data_i]['new_positions'][0, 0].mean(axis=0).astype(np.float32)[2]
         ppos /= 5
         ppos[:,0] += 0.5
         ppos[:,2] += 0.5
