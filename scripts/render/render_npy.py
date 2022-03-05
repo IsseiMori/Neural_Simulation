@@ -11,6 +11,7 @@ import cv2
 import argparse
 import math
 import glob
+import re
 
 import vispy.scene
 from vispy import app
@@ -36,6 +37,7 @@ images = []
 data = []
 
 files = glob.glob(args.data)
+files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
 if args.mpm: half_edge = np.array([0.03, 0.16, 0.03])
 if args.flex: half_edge = np.array([0.15, 0.8, 0.15])

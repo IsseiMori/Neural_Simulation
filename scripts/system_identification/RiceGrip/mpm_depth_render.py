@@ -10,8 +10,8 @@ from utils import *
 
 
 root_dir = os.environ.get('NSIMROOT')
-mpm_path = os.path.join(root_dir, "scripts/data_generators/RiceGrip/mpm/data/*.npy")
-out_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/mpm_depth")
+mpm_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/raw_mpm/*.npy")
+out_path = os.path.join(root_dir, "tmp/FLEX_RiceGrip/finetuned/mpm_depth2")
 
 
 files = glob.glob(mpm_path)
@@ -22,7 +22,7 @@ for file in files:
 
     depths = []
 
-    d = np.load(files[10], allow_pickle=True).item()
+    d = np.load(file, allow_pickle=True).item()
 
     positions = d['positions'][0]
 
@@ -34,12 +34,14 @@ for file in files:
 
         depths.append(depth)
 
-        # save_depth_image(depth, os.path.join(out_path, str(i_frame) + ".png"))
+        save_depth_image(depth, os.path.join(out_path, str(i_frame) + ".png"))
 
 
     depths = np.array(depths)
     with open(os.path.join(out_path, os.path.splitext(file)[0].split('/')[-1] + ".npy"), 'wb') as f:
         np.save(f, depths)
+
+    exit()
 
 
 

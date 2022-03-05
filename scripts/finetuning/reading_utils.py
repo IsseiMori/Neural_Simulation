@@ -23,6 +23,7 @@ import tensorflow.compat.v1 as tf
 # Create a description of the features.
 _FEATURE_DESCRIPTION = {
     'position': tf.io.VarLenFeature(tf.string),
+    'depths': tf.io.VarLenFeature(tf.string),
 }
 
 _FEATURE_DESCRIPTION_WITH_GLOBAL_CONTEXT = _FEATURE_DESCRIPTION.copy()
@@ -31,6 +32,10 @@ _FEATURE_DESCRIPTION_WITH_GLOBAL_CONTEXT['step_context'] = tf.io.VarLenFeature(
 
 _FEATURE_DTYPES = {
     'position': {
+        'in': np.float32,
+        'out': tf.float32
+    },
+    'depths': {
         'in': np.float32,
         'out': tf.float32
     },
@@ -91,6 +96,12 @@ def parse_serialized_simulation_example(example_proto, metadata):
   # Reshape positions to correct dim:
   parsed_features['position'] = tf.reshape(parsed_features['position'],
                                            position_shape)
+
+  depth_shape = [metadata['sequence_length'] + 1, 512, 512]
+  parsed_features['depths'] = tf.reshape(parsed_features['depths'],
+                                           depth_shape)
+
+
   # Set correct shapes of the remaining tensors.
   sequence_length = metadata['sequence_length'] + 1
   if 'context_mean' in metadata:

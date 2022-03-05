@@ -14,12 +14,6 @@ INPUT_SEQUENCE_LENGTH = 6
 device = 'cuda'
 batch_size = 1
 noise_std = 6.7e-4
-training_steps = int(3e6)
-log_steps = 5
-eval_steps = 100 #100000
-num_eval_steps = 10 # 1000
-save_steps = 10 # 1000
-rollout_steps = 100 #100000
 STD_EPSILON = torch.FloatTensor([1e-8]).to(device)
 
 
@@ -326,7 +320,8 @@ class Simulator(nn.Module):
         new_position = most_recent_position + new_velocity  # * dt = 1
         return new_position
 
-    def predict_positions(self, current_positions, n_particles_per_example, particle_types, global_context):
+    def predict_positions(self, current_positions, n_particles_per_example, particle_types, global_context, dummy_arg=None):
+        assert dummy_arg is not None
         node_features, edge_index, e_features = self._build_graph_from_raw(current_positions, n_particles_per_example, particle_types, global_context)
         predicted_normalized_acceleration = self._encode_process_decode(node_features, edge_index, e_features)
         next_position = self._decoder_postprocessor(predicted_normalized_acceleration, current_positions)
@@ -388,6 +383,7 @@ def prepare_data_from_tfds(data_path, split='train', is_rollout=False, batch_siz
         target_position = pos[:, -1]
         out_dict['position'] = pos[:, :-1]
         out_dict['n_particles_per_example'] = [tf.shape(pos)[0]]
+        out_dict['depths'] = features['depths']
         if 'step_context' in features:
             out_dict['step_context'] = features['step_context']
         out_dict['is_trajectory'] = tf.constant([True], tf.bool)
