@@ -242,46 +242,7 @@ for data_i in range(0, 1):
             if SAVE_VIDEO:
                 pyflex.render(capture=1, path=os.path.join('tmp', 'render_%d.tga' % (r * time_step + i)))
 
-            # print(pyflex.get_sceneParams())
-            # print(rigid_rotations[r, i])
-
             pyflex.step()
-
-        # for i in range(time_step - 1):
-        #     idx = 10
-        #     cnt = 0
-        #     for j in range(n_rigids):
-        #         st, ed = rigid_offsets[r, i, j, 0], rigid_offsets[r, i, j + 1, 0]
-        #         for k in range(st, ed):
-        #             if rigid_indices[r, i, cnt, 0] == idx:
-        #                 print(i, j, positions[r, i, rigid_indices[r, i, cnt, 0], :3],
-        #                       rigid_globalPositions[r, i, rigid_indices[r, i, cnt, 0]],
-        #                       rotate(rigid_localPositions[r, i, cnt], rigid_rotations[r, i, j]) + \
-        #                       rigid_translations[r, i, j])
-        #             cnt += 1
-
-
-    # print(rigid_indices[r, i])
-    # print(rigid_indices[r, i].shape)
-
-    # print(rigid_globalPositions.shape)
-    # print(rigid_rotations.shape)
-    # print(rigid_localPositions.shape)
-    # print(restPositions.shape)
-    # print(rigid_translations.shape)
-
-    # print(positions[0].std(axis=0).mean(axis=0))
-    # print(rigid_globalPositions[0].std(axis=0).mean(axis=0))
-    # print(rigid_localPositions[0].std(axis=0).mean(axis=0))
-    # print(restPositions[0].std(axis=0).mean(axis=0))
-
-    # print(data_positions[0, 0].mean(axis=0))
-    # print(data_positions[0, 15].mean(axis=0))
-    # print(data_positions[0, 15].std(axis=0))
-    # print(data_velocities[0, 15].mean(axis=0))
-    # print(data_velocities[0, 15].std(axis=0))
-
-    # print((data_positions[0, 15] - data_positions[0, 0]).std(axis=0))
 
 
     states = {
