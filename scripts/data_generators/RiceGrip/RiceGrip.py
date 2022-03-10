@@ -10,10 +10,18 @@ from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
+import cv2
+from PIL import Image
+import re
+
 
 dt = 1. / 60.
-des_dir = 'RiceGrip'
+des_dir = 'RiceGrip2'
 os.system('mkdir -p ' + des_dir)
+SAVE_VIDEO = True
+
+if SAVE_VIDEO:
+    os.makedirs("tmp", exist_ok=True)
 
 # n_particles = 768
 # n_shapes = 2
@@ -121,7 +129,7 @@ def rand_float(lo, hi):
     return np.random.rand() * (hi - lo) + lo
 
 
-for data_i in range(0, 5000):
+for data_i in range(0, 1):
 
     ### set scene
     # x, y, z: [8.0, 10.0]
@@ -132,7 +140,6 @@ for data_i in range(0, 5000):
     y = 10
     z = 10
     clusterStiffness = rand_float(0.3, 0.7)
-    # clusterPlasticThreshold = rand_float(0.000004, 0.0001)
     clusterPlasticThreshold = rand_float(0.00001, 0.0005)
     clusterPlasticCreep = rand_float(0.1, 0.3)
 
@@ -231,6 +238,10 @@ for data_i in range(0, 5000):
             if i > 0:
             	data_velocities[r, i] = (data_positions[r, i] - data_positions[r, i-1]) / dt
 
+
+            if SAVE_VIDEO:
+                pyflex.render(capture=1, path=os.path.join('tmp', 'render_%d.tga' % (r * time_step + i)))
+
             # print(pyflex.get_sceneParams())
             # print(rigid_rotations[r, i])
 
@@ -281,20 +292,35 @@ for data_i in range(0, 5000):
         'clusterPlasticCreep': clusterPlasticCreep
         }
 
-    with open('RiceGrip/{:0>4}.npy'.format(str(data_i)), 'wb') as f:
+    with open(os.path.join(des_dir, '{:0>4}.npy'.format(str(data_i))), 'wb') as f:
         np.save(f, states)
 
 
-    # pyflex.set_scene(5, scene_params, 0)
-    # pyflex.add_box(halfEdge, center, quat)
-    # pyflex.add_box(halfEdge, center, quat)
+    if SAVE_VIDEO:
+        image_folder = 'tmp'
+        video_name = os.path.join(des_dir, '{:0>4}.avi'.format(str(data_i)))
 
-    # for r in range(grip_time):
-    #     for i in range(time_step):
-    #         pyflex.set_positions(positions[r, i])
-    #         pyflex.set_shape_states(shape_states[r, i])
+        images = [img for img in os.listdir(image_folder) if img.endswith(".tga")]
+        images.sort(key = lambda f: int(re.sub('\D', '', f)))
 
-    #         pyflex.render(capture=1, path=os.path.join(des_dir, 'render_%d.tga' % (r * time_step + i)))
+
+        im = Image.open(os.path.join(image_folder, images[0])) 
+        nimg = np.array(im)
+        frame = cv2.cvtColor(nimg, cv2.COLOR_RGB2BGR)
+
+        height, width, layers = frame.shape
+
+        video = cv2.VideoWriter(video_name, 0, 60, (width,height))
+
+        for image in images:
+            im = Image.open(os.path.join(image_folder, image)) 
+            nimg = np.array(im)
+            frame = cv2.cvtColor(nimg, cv2.COLOR_RGB2BGR)
+
+            video.write(frame)
+
+        cv2.destroyAllWindows()
+        video.release()
 
 
 pyflex.clean()

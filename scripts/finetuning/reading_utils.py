@@ -97,7 +97,7 @@ def parse_serialized_simulation_example(example_proto, metadata):
   parsed_features['position'] = tf.reshape(parsed_features['position'],
                                            position_shape)
 
-  depth_shape = [metadata['sequence_length'] + 1, 512, 512]
+  depth_shape = [metadata['sequence_length'] + 1, 128, 128]
   parsed_features['depths'] = tf.reshape(parsed_features['depths'],
                                            depth_shape)
 

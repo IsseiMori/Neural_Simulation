@@ -10,6 +10,7 @@ from utils_simulator import *
 from utils_glpointrast import *
 from glpointrast import perspective, PointRasterizer
 
+from pytorch3d.loss import chamfer_distance
 
 import argparse
 
@@ -105,7 +106,62 @@ model_view = np.linalg.inv(
     ]))
 
 proj = perspective(np.pi / 3, 1, 0.1, 10)
-raster_func = PointRasterizer(512, 512, 0.03, model_view * rotx(90), proj)
+raster_func = PointRasterizer(128, 128, 0.03, model_view * rotx(90), proj)
+
+def unproject(proj, depth_image):
+    z = proj[2, 2] * depth_image + proj[2, 3]
+    w = proj[3, 2] * depth_image
+    z_ndc = z / w
+
+    H, W = depth_image.shape
+    ndc = np.stack(
+        np.meshgrid(
+            np.arange(0.5, W + 0.4) * 2 / W - 1,
+            np.arange(0.5, H + 0.4)[::-1] * 2 / H - 1,
+        )
+        + [z_ndc, np.ones_like(z_ndc)],
+        axis=-1,
+    )
+
+    pos = ndc @ np.linalg.inv(proj).T
+    return pos[..., :3] / pos[..., [3]]
+
+
+def unproject_torch(proj, proj_inv, depth_image):
+    z = proj[2, 2] * depth_image + proj[2, 3]
+    w = proj[3, 2] * depth_image
+    z_ndc = z / w
+
+    H, W = depth_image.shape
+    ndc = torch.stack(
+        [
+            torch.tensor(x, dtype=depth_image.dtype, device=depth_image.device)
+            for x in np.meshgrid(
+                np.arange(0.5, W + 0.4) * 2 / W - 1,
+                np.arange(0.5, H + 0.4)[::-1] * 2 / H - 1,
+            )
+        ]
+        + [z_ndc, torch.ones_like(z_ndc)],
+        axis=-1,
+    )
+    pos = ndc @ proj_inv.T
+    return pos[..., :3] / pos[..., [3]]
+
+proj_matrix = torch.Tensor(np.array([
+    [ 1.73205081,  0.,          0.,          0.        ],
+    [ 0.,          1.73205081,  0.,          0.        ],
+    [ 0.,          0.,         -1.,         -0.1       ],
+    [ 0.,          0.,         -1.,          0.        ],
+])).to(device)
+
+
+proj_matrix_inv = torch.Tensor(np.array([
+    [  0.57735027,   0.,          -0.,           0.        ],
+    [  0.,           0.57735027,  -0.,           0.        ],
+    [  0.,           0.,          -0.,         -10.        ],
+    [  0.,           0.,          -1.,          10.        ],
+])).to(device)
+
 
 
 class SimulatorRolloutNet(torch.nn.Module):
@@ -145,11 +201,16 @@ class SimulatorRolloutNet(torch.nn.Module):
             predictions.append(next_position)
             current_positions = torch.cat([current_positions[:, 1:], next_position[:, None, :]], dim=1)
 
+        non_kinematic_mask = (features['particle_type'] != 3).clone().detach().to(device)
+        num_non_kinematic = non_kinematic_mask.sum()
+
         predictions = torch.stack(predictions) # (time, n_nodes, 2)
         ground_truth_positions = ground_truth_positions.permute(1,0,2)
         loss_positions = (predictions - ground_truth_positions) ** 2
-        loss_positions = torch.sum(loss_positions)
-
+        loss_positions = loss_positions.sum(dim=-1)
+        num_non_kinematic = non_kinematic_mask.sum()
+        loss_positions = torch.where(non_kinematic_mask.bool(), loss_positions, torch.zeros_like(loss_positions))
+        loss_positions = torch.sum(loss_positions) / num_non_kinematic
 
         loss = 0
         for step, pred in enumerate(predictions):
@@ -158,35 +219,53 @@ class SimulatorRolloutNet(torch.nn.Module):
 
             points_predicted = pred[:n_kinetic_particles, 3:].float().contiguous() 
             depth_predicted = raster_func.apply(points_predicted)
-            depth_predicted[depth_predicted <= -100000] = 0
-
-            # save_depth_image(depth_predicted.to("cpu").detach().numpy(), os.path.join(output_path, "{:0>4}.png".format(str(step))))
 
             depth_true = ground_truth_depths[step]
 
-            depth_true_intersect = depth_true.clone()
-            depth_predicted_intersec = depth_predicted.clone()
-            depth_true_intersect[depth_true == 0] = 0
-            depth_true_intersect[depth_predicted == 0] = 0
-            depth_predicted_intersec[depth_true == 0] = 0
-            depth_predicted_intersec[depth_predicted == 0] = 0
-            n_pixel_intersect = len(depth_true_intersect[depth_true_intersect != 0])
+            # save_depth_image(depth_predicted.to("cpu").detach().numpy(), os.path.join(output_path, "{:0>4}.png".format(str(step))))
+
+            # Set background to a reasonable depth
+            depth_predicted[depth_predicted <= -100000] = -100
+            depth_true[depth_true==0] = -100
 
 
-            loss_intersection = torch.sqrt((depth_true_intersect - depth_predicted_intersec)**2).mean()
+            points_projected_true = unproject_torch(proj_matrix, proj_matrix_inv, depth_true)
+            points_projected_pred = unproject_torch(proj_matrix, proj_matrix_inv, depth_predicted)
 
 
-            depth_overlap = torch.ones_like(depth_true)
-            depth_overlap[depth_true == 0] = 0
-            depth_overlap[depth_predicted == 0] = 0
+            points_projected_true = torch.flatten(points_projected_true, start_dim=0, end_dim=1)
+            points_projected_pred = torch.flatten(points_projected_pred, start_dim=0, end_dim=1)
+            points_projected_true = points_projected_true[None, :]
+            points_projected_pred = points_projected_pred[None, :]
 
-            depth_union = torch.zeros_like(depth_true)
-            depth_union[depth_true != 0] = 1
-            depth_union[depth_predicted != 0] = 1
-            loss_iou = depth_overlap.sum() / depth_union.sum()
+            loss += chamfer_distance(points_projected_true, points_projected_pred)[0]
 
-            # loss = loss_intersection + (1.0 - loss_iou)
-            loss = loss_intersection
+
+
+            ## Masked IOU is not trivial
+            # depth_true_intersect = depth_true.clone()
+            # depth_predicted_intersec = depth_predicted.clone()
+            # depth_true_intersect[depth_true == 0] = 0
+            # depth_true_intersect[depth_predicted == 0] = 0
+            # depth_predicted_intersec[depth_true == 0] = 0
+            # depth_predicted_intersec[depth_predicted == 0] = 0
+            # n_pixel_intersect = len(depth_true_intersect[depth_true_intersect != 0])
+
+
+            # loss_intersection = torch.sqrt((depth_true_intersect - depth_predicted_intersec)**2).mean()
+
+
+            # depth_overlap = torch.ones_like(depth_true)
+            # depth_overlap[depth_true == 0] = 0
+            # depth_overlap[depth_predicted == 0] = 0
+
+            # depth_union = torch.zeros_like(depth_true)
+            # depth_union[depth_true != 0] = 1
+            # depth_union[depth_predicted != 0] = 1
+            # loss_iou = depth_overlap.sum() / depth_union.sum()
+
+            # # loss = loss_intersection + (1.0 - loss_iou)
+            # loss = loss_intersection
 
         loss /= self.steps
 
@@ -261,20 +340,24 @@ def train(simulator):
             g['lr'] = lr_new
 
 
-    for step_i in range(training_steps):
-        for example_i, (features, labels) in enumerate(ds):
+    #for step_i in range(training_steps):
+    for example_i, (features, labels) in enumerate(ds):
+        # Randomly sample 558 particles from the mpm data to match with the pretrained model
+        features_obj = features['position'][:-360]
+        random_sampled_particles = features_obj[np.random.choice(len(features_obj), size=num_particles, replace=False)]
+        features['position'] =  np.concatenate([random_sampled_particles, features['position'][-360:]])
+
+        features['n_particles_per_example'][0] = num_particles + 360
+        features['particle_type'] = np.concatenate([features['particle_type'][:num_particles], features['particle_type'][-360:]])
+        
+        for step_i in range(training_steps):
 
 
-            # Randomly sample 558 particles from the mpm data to match with the pretrained model
-            features_obj = features['position'][:-360]
-            random_sampled_particles = features_obj[np.random.choice(len(features_obj), size=num_particles, replace=False)]
-            features['position'] =  np.concatenate([random_sampled_particles, features['position'][-360:]])
-
-            features['n_particles_per_example'][0] = num_particles + 360
-            features['particle_type'] = np.concatenate([features['particle_type'][:num_particles], features['particle_type'][-360:]])
+            
 
 
             loss, loss_positions, predictions, ground_truth_positions = model(features)
+
 
             if step % rollout_steps == 0:
                 save_optimization_rollout(features, predictions, ground_truth_positions, step, loss)

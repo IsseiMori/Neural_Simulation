@@ -41,7 +41,6 @@ for file in files:
     with open(os.path.join(out_path, os.path.splitext(file)[0].split('/')[-1] + ".npy"), 'wb') as f:
         np.save(f, depths)
 
-    exit()
 
 
 

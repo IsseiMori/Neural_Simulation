@@ -115,7 +115,7 @@ def compute_depth_mc(points, rot=rotx_q(0), trans=np.array([0,0,0]), show_canvas
     if show_canvas:
         v = pyrender.Viewer(scene, use_raymond_lighting=True)  
 
-    r = pyrender.OffscreenRenderer(viewport_width=512, viewport_height=512)
+    r = pyrender.OffscreenRenderer(viewport_width=128, viewport_height=128)
     color, depth = r.render(scene)
 
     depth = -depth
