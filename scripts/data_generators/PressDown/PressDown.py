@@ -15,8 +15,9 @@ from PIL import Image
 import re
 
 
+
 dt = 1. / 60.
-des_dir = 'RiceGrip'
+des_dir = 'PressDown'
 os.system('mkdir -p ' + des_dir)
 SAVE_VIDEO = True
 
@@ -42,7 +43,7 @@ def sample_gripper_config():
     angle = np.random.rand() * np.pi * 2.
     x = np.cos(angle) * dis
     z = np.sin(angle) * dis
-    d = np.random.rand() * 0.1 + 0.7    # (0.6, 0.8)
+    d = np.random.rand() * 0.2 + 0.05    # (0.6, 0.8)
     return x, z, d
 
 def quatFromAxisAngle(axis, angle):
@@ -66,29 +67,25 @@ def calc_shape_states(t, gripper_config):
     time = max(0., t) * 5
     lastTime = max(0., t - dt) * 5
 
-    states = np.zeros((2, dim_shape_state))
+    states = np.zeros((1, dim_shape_state))
 
     dis = np.sqrt(x**2 + z**2)
     angle = np.array([-z / dis, x / dis])
+    angle = np.array([np.abs(x / dis)])
     quat = quatFromAxisAngle(np.array([0., 1., 0.]), np.arctan(x / z))
+    # quat = quatFromAxisAngle(np.array([0., 1., 0.]), 0)
 
-    e_0 = np.array([x + z * half_rest_gripper_dis / dis, z - x * half_rest_gripper_dis / dis])
-    e_1 = np.array([x - z * half_rest_gripper_dis / dis, z + x * half_rest_gripper_dis / dis])
+    # e_0 = np.array([x + z * half_rest_gripper_dis / dis, z - x * half_rest_gripper_dis / dis])
+    e_0 = np.array([0])
 
-    e_0_curr = e_0 + angle * np.sin(time) * s
-    e_1_curr = e_1 - angle * np.sin(time) * s
-    e_0_last = e_0 + angle * np.sin(lastTime) * s
-    e_1_last = e_1 - angle * np.sin(lastTime) * s
+    e_0_curr = e_0 + 1 * np.sin(time) * s
+    e_0_last = e_0 + 1 * np.sin(lastTime) * s
 
-    states[0, :3] = np.array([e_0_curr[0], 0.6, e_0_curr[1]])
-    states[0, 3:6] = np.array([e_0_last[0], 0.6, e_0_last[1]])
+    states[0, :3] = np.array([x, 1.5 - e_0_curr[0], z])
+    states[0, 3:6] = np.array([x, 1.5 - e_0_last[0], z])
     states[0, 6:10] = quat
     states[0, 10:14] = quat
 
-    states[1, :3] = np.array([e_1_curr[0], 0.6, e_1_curr[1]])
-    states[1, 3:6] = np.array([e_1_last[0], 0.6, e_1_last[1]])
-    states[1, 6:10] = quat
-    states[1, 10:14] = quat
 
     return states
 
@@ -124,13 +121,19 @@ for data_i in range(0, 1):
     scene_params = np.array([x, y, z, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep])
     pyflex.set_scene(5, scene_params, 0)
 
-    halfEdge = np.array([0.15, 0.8, 0.15])
+    halfEdge = np.array([0.40, 0.10, 0.40])
     center = np.array([0., 0., 0.])
     quat = np.array([1., 0., 0., 0.])
 
     pyflex.add_box(halfEdge, center, quat)
-    pyflex.add_box(halfEdge, center, quat)
+    # pyflex.add_box(halfEdge, center, quat)
 
+
+    ### read scene info
+    # print("Scene Upper:", pyflex.get_scene_upper())
+    # print("Scene Lower:", pyflex.get_scene_lower())
+    # print("Num particles:", pyflex.get_phases().reshape(-1, 1).shape[0])
+    # print("Phases:", np.unique(pyflex.get_phases()))
 
     n_particles = pyflex.get_n_particles()
     n_shapes = pyflex.get_n_shapes()

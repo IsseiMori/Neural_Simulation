@@ -16,7 +16,7 @@ import re
 
 
 dt = 1. / 60.
-des_dir = 'RiceGrip'
+des_dir = 'BendTube'
 os.system('mkdir -p ' + des_dir)
 SAVE_VIDEO = True
 
@@ -30,7 +30,7 @@ if SAVE_VIDEO:
 # np.random.seed(0)
 
 grip_time = 1
-time_step = 40
+time_step = 80
 dim_position = 4
 dim_velocity = 3
 dim_shape_state = 14
@@ -63,35 +63,46 @@ def calc_shape_states(t, gripper_config):
     s = (rest_gripper_dis - d) / 2.
     half_rest_gripper_dis = rest_gripper_dis / 2.
 
-    time = max(0., t) * 5
-    lastTime = max(0., t - dt) * 5
+    time = max(0., t) * 4
+    lastTime = max(0., t - dt) * 4
 
-    states = np.zeros((2, dim_shape_state))
+    states = np.zeros((3, dim_shape_state))
 
     dis = np.sqrt(x**2 + z**2)
     angle = np.array([-z / dis, x / dis])
     quat = quatFromAxisAngle(np.array([0., 1., 0.]), np.arctan(x / z))
+    quat = quatFromAxisAngle(np.array([0., 1., 0.]), 0)
 
-    e_0 = np.array([x + z * half_rest_gripper_dis / dis, z - x * half_rest_gripper_dis / dis])
-    e_1 = np.array([x - z * half_rest_gripper_dis / dis, z + x * half_rest_gripper_dis / dis])
+    # e_0 = np.array([x + z * half_rest_gripper_dis / dis, z - x * half_rest_gripper_dis / dis])
+    # e_1 = np.array([x - z * half_rest_gripper_dis / dis, z + x * half_rest_gripper_dis / dis])
+    # e_2 = np.array([x - z * half_rest_gripper_dis / dis, z - x * half_rest_gripper_dis / dis])
+    e_0 = np.array([0])
+    e_1 = np.array([0])
+    e_2 = np.array([0])
 
-    e_0_curr = e_0 + angle * np.sin(time) * s
-    e_1_curr = e_1 - angle * np.sin(time) * s
-    e_0_last = e_0 + angle * np.sin(lastTime) * s
-    e_1_last = e_1 - angle * np.sin(lastTime) * s
+    e_0_curr = e_0 + 1 * np.cos(time) * s
+    e_1_curr = e_1 - 1 * np.cos(time) * s
+    e_2_curr = e_2 - 1 * np.cos(time) * s
+    e_0_last = e_0 + 1 * np.cos(lastTime) * s
+    e_1_last = e_1 - 1 * np.cos(lastTime) * s
+    e_2_last = e_2 - 1 * np.cos(lastTime) * s
 
-    states[0, :3] = np.array([e_0_curr[0], 0.6, e_0_curr[1]])
-    states[0, 3:6] = np.array([e_0_last[0], 0.6, e_0_last[1]])
+    states[0, :3] = np.array([0.0, 0.6, e_0_curr[0]])
+    states[0, 3:6] = np.array([0.0, 0.6, e_0_last[0]])
     states[0, 6:10] = quat
     states[0, 10:14] = quat
 
-    states[1, :3] = np.array([e_1_curr[0], 0.6, e_1_curr[1]])
-    states[1, 3:6] = np.array([e_1_last[0], 0.6, e_1_last[1]])
+    states[1, :3] = np.array([1.0, 0.6, e_1_curr[0]])
+    states[1, 3:6] = np.array([1.0, 0.6, e_1_last[0]])
     states[1, 6:10] = quat
     states[1, 10:14] = quat
 
-    return states
+    states[2, :3] = np.array([-1.0, 0.6, e_2_curr[0]])
+    states[2, 3:6] = np.array([-1.0, 0.6, e_2_last[0]])
+    states[2, 6:10] = quat
+    states[2, 10:14] = quat
 
+    return states
 
 
 pyflex.init()
@@ -109,25 +120,27 @@ for data_i in range(0, 1):
     # clusterStiffness: [0.4, 0.8]
     # clusterPlasticThreshold: [0.000005, 0.0001]
     # clusterPlasticCreep: [0.1, 0.3]
-    x = 10
-    y = 10
-    z = 10
+    x = 30
+    y = 5
+    z = 5
     clusterStiffness = rand_float(0.3, 0.7)
     clusterPlasticThreshold = rand_float(0.00001, 0.0005)
     clusterPlasticCreep = rand_float(0.1, 0.3)
 
-    # clusterStiffness = 0.7
-    # clusterPlasticThreshold = 0.1
-    # clusterPlasticCreep = 0.3
-
+    clusterStiffness = 0.3
+    clusterPlasticThreshold = 0.00001
+    clusterPlasticCreep = 0.1
 
     scene_params = np.array([x, y, z, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep])
     pyflex.set_scene(5, scene_params, 0)
+
+    print(scene_params)
 
     halfEdge = np.array([0.15, 0.8, 0.15])
     center = np.array([0., 0., 0.])
     quat = np.array([1., 0., 0., 0.])
 
+    pyflex.add_box(halfEdge, center, quat)
     pyflex.add_box(halfEdge, center, quat)
     pyflex.add_box(halfEdge, center, quat)
 
