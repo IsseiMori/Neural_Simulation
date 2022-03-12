@@ -25,7 +25,8 @@ args = parser.parse_args()
 
 
 dt = 1. / 60.
-os.system('mkdir -p ' + args.scene)
+out_dir = os.path.join("output/FLEX", args.scene)
+os.system('mkdir -p ' + out_dir)
 
 if args.video:
     os.makedirs("tmp", exist_ok=True)
@@ -121,13 +122,13 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         'scene_info': scene_info
         }
 
-    with open(os.path.join(args.scene, '{:0>4}.npy'.format(str(data_i))), 'wb') as f:
+    with open(os.path.join(out_dir, '{:0>4}.npy'.format(str(data_i))), 'wb') as f:
         np.save(f, states)
 
 
     if args.video:
         image_folder = 'tmp'
-        video_name = os.path.join(args.scene, '{:0>4}.avi'.format(str(data_i)))
+        video_name = os.path.join(out_dir, '{:0>4}.avi'.format(str(data_i)))
 
         images = [img for img in os.listdir(image_folder) if img.endswith(".tga")]
         images.sort(key = lambda f: int(re.sub('\D', '', f)))
@@ -152,10 +153,9 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         video.release()
 
 
-N_GRID = 2
+N_GRID = 5
 params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
 params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-print(params_offset)
 
 data_i = 0
 for p1 in range(N_GRID):

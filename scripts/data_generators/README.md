@@ -38,3 +38,8 @@ export LD_LIBRARY_PATH=${PYFLEXROOT}/external/SDL2-2.0.4/lib/x64:$LD_LIBRARY_PAT
 cd ${PYFLEXROOT}/bindings/examples
 python test_FluidFall.py
 ```
+
+# Run FLEX data generate script
+```
+python data.py --video --scene=CompressTube
+```

@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pyflex
 import time
 import torch
 import sys
@@ -60,7 +59,7 @@ def sample_gripper_config(data_type="RiceGrip", random=True):
 
         x = np.cos(angle) * dis
         z = np.sin(angle) * dis
-        d = d_rand * 0.1    # (0.6, 0.8)
+        d = d_rand * 1.0    # (0.6, 0.8)
         return x, z, d
 
     else:
