@@ -39,17 +39,16 @@ data = []
 files = glob.glob(args.data)
 files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
-if args.mpm: half_edge = np.array([0.03, 0.16, 0.03])
-if args.flex: half_edge = np.array([0.15, 0.8, 0.15])
-
 
 for file in files:
     d = np.load(file, allow_pickle=True).item()
     if args.restpos: 
-        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,3:] , d['shape_states'], half_edge)[:,:,:,:3]
+        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,3:] , d['shape_states'], d['scene_info'])[:,:,:,:3]
     else:
-        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,:3] , d['shape_states'], half_edge)[:,:,:,:3]
+        d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,:3] , d['shape_states'], d['scene_info'])[:,:,:,:3]
     data.append(d)
+
+particle_count = d['positions'].shape[2]
 
 c = vispy.scene.SceneCanvas(keys='interactive', show=True, bgcolor='white')
 view = c.central_widget.add_view()
@@ -69,6 +68,11 @@ p1.antialias = 0  # remove white edge
 vispy_utils.y_rotate(p1)
 view.add(p1)
 
+p2 = vispy.scene.visuals.Markers()
+p2.antialias = 0  # remove white edge
+vispy_utils.y_rotate(p2)
+view.add(p2)
+
 frame = 0
 
 total_frames = len(data) * (len(data[0]['new_positions'][0]) - 5)
@@ -86,12 +90,8 @@ def update(event):
     frame_i = frame % seq_length
     ppos = data[data_i]['new_positions'][0, frame_i].astype(np.float32) - np.array([0, 0, 0])
 
-    if args.flex:
-        ppos /= 5
-        ppos[:,0] += 0.5
-        ppos[:,2] += 0.5
-
-    p1.set_data(ppos, edge_color='black', face_color='white')
+    p1.set_data(ppos[:particle_count], edge_color='black', face_color='white')
+    p2.set_data(ppos[particle_count:], edge_color='red', face_color='white')
 
     img = c.render()
 
