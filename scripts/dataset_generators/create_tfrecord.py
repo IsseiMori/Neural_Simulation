@@ -20,7 +20,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", help="data dir", required=True, type=str)
 parser.add_argument("--out", help="out dir", required=True, type=str)
-parser.add_argument("--simulator", help="data type", required=True, type=str)
+parser.add_argument("--flex", help="Is this flex data?", action='store_true')
+parser.add_argument("--mpm", help="Is this mpm data?", action='store_true')
 parser.add_argument("--restpos", help="include respos?", action='store_true')
 
 parser.add_argument("--num_data", help="number of data to include", required=False, default=100, type=int)
@@ -31,8 +32,8 @@ parser.add_argument("--has_context", help="has context?", required=False, defaul
 
 args = parser.parse_args()
 
-if not args.simulator == 'mpm' and not args.simulator == 'flex':
-    sys.error("--simulator must be mpm or flex")
+if ( (args.mpm and args.flex) or (not args.mpm and not args.flex) ):
+    sys.error("Please specify --mpm or --flex")
 
 
 
@@ -232,7 +233,7 @@ def main():
         args.offset, 
         args.offset + args.num_data, 
         args.has_context,
-        args.simulator == 'mpm',
+        args.mpm,
         args.restpos
     )
 
