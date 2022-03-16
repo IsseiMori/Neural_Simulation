@@ -15,8 +15,12 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", help="data path", required=True, type=str)
+parser.add_argument("--simulator", help="data type", required=True, type=str)
 parser.add_argument("--restpos", help="has rest pos in positions?", action='store_true')
 args = parser.parse_args()
+
+if not args.simulator == 'mpm' and not args.simulator == 'flex':
+    sys.error("--simulator must be mpm or flex")
 
 
 data = []
@@ -117,10 +121,15 @@ for j in range(len(data)):
         mse = ((data[j]['ground_truth_rollout'][:,:n_kinetic_particles] - data[j]['predicted_rollout'][:,:n_kinetic_particles])**2).mean()
 
         frame = cv2.putText(frame, 'Ground Truth #{:d}'.format(j), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
+        if args.simulator == 'mpm':
+            frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        else:
+            frame = cv2.putText(frame, 'YS = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            frame = cv2.putText(frame, 'E = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            frame = cv2.putText(frame, 'nu = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
         frame = cv2.putText(frame, 'Predicted Result #{:d} (MSE = {:.5f})'.format(j, mse), (800+30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         frame = cv2.putText(frame, 'Frame = {:d}'.format(j), (800+30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
