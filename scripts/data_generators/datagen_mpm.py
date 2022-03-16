@@ -12,7 +12,8 @@ parser.add_argument("--scene", help="data type", required=True, type=str)
 parser.add_argument("--video", help="write video", action='store_true')
 args = parser.parse_args()
 
-out_dir = os.path.join("output/MPM", args.scene)
+root_dir = os.environ.get('NSIMROOT')
+out_dir = os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/MPM")
 os.system('mkdir -p ' + out_dir)
 
 
@@ -50,7 +51,7 @@ def simulate_scene(data_i, params):
 
     # gripper_config = sample_gripper_config("BendTube", random=False)
 
-    d = np.load("output/FLEX/" + args.scene + "/0000.npy", allow_pickle=True).item()
+    d = np.load(os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/FLEX/{:0>4}.npy".format(str(data_i))), allow_pickle=True).item()
     
     # x, v, F, C, p1, p2, p3 = state['state']
     states_xvfcp = state['state']
@@ -118,19 +119,13 @@ def simulate_scene(data_i, params):
         animate(images, os.path.join(out_dir, '{:0>4}.webm'.format(str(data_i))))
 
 
-
-N_GRID = 5
-params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
-params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-
-data_i = 0
-for p1 in range(N_GRID):
-    for p2 in range(N_GRID):
-        for p3 in range(N_GRID):
-            params = []
-            params.append(params_range[0][0] + params_offset[0] * p1)
-            params.append(params_range[1][0] + params_offset[1] * p2)
-            params.append(params_range[2][0] + params_offset[2] * p3)
-            print(params)
-            simulate_scene(data_i, params)
-            data_i += 1
+for data_i in range(5000):
+    YS = 5 + np.random.random()*195
+    E = 100 + np.random.random()*2900
+    nu = 0 + np.random.random()*0.45
+    params = []
+    params.append(YS)
+    params.append(E)
+    params.append(nu)
+    print(params)
+    simulate_scene(data_i, params)

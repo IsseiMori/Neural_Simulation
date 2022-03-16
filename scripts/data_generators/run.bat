@@ -1,9 +1,9 @@
-python data.py --video --scene=RiceGrip
-python data.py --video --scene=PressDown
-python data.py --video --scene=BendTube
-python data.py --video --scene=CompressTube
+python flex_random.py --scene=RiceGrip
+python flex_random.py --scene=PressDown
+rem python flex_random.py --scene=BendTube
+rem python flex_random.py --scene=CompressTube
 
-python datagen_mpm.py --video --scene=RiceGrip
-python datagen_mpm.py --video --scene=PressDown
-python datagen_mpm.py --video --scene=BendTube
-python datagen_mpm.py --video --scene=CompressTube
+rem python datagen_mpm.py --scene=RiceGrip
+rem python datagen_mpm.py --scene=PressDown
+rem python datagen_mpm.py --scene=BendTube
+rem python datagen_mpm.py --scene=CompressTube

@@ -178,17 +178,6 @@ def particlify_box(center, half_edge, quat):
     local_bottom_corner_pos = np.array([-half_width, -half_height, - half_width])
 
 
-    # # Add corners
-    # pos.append(local_bottom_corner_pos + np.array([0, 0, 0]))
-    # pos.append(local_bottom_corner_pos + np.array([0, 0, half_height * 2]))
-    # pos.append(local_bottom_corner_pos + np.array([half_width * 2, 0, 0]))
-    # pos.append(local_bottom_corner_pos + np.array([half_width * 2, 0, half_height * 2]))
-    # pos.append(local_bottom_corner_pos + np.array([0, half_width * 2, 0]))
-    # pos.append(local_bottom_corner_pos + np.array([0, half_width * 2, half_height * 2]))
-    # pos.append(local_bottom_corner_pos + np.array([half_width * 2, half_width * 2, 0]))
-    # pos.append(local_bottom_corner_pos + np.array([half_width * 2, half_width * 2, half_height * 2]))
-
-
     for h in range(0, particle_count_height + 1):
         for w in range(0, particle_count_width):
             pos.append(local_bottom_corner_pos + np.array([offset_width * w, offset_height * h, 0]))
