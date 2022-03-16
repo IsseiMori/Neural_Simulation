@@ -43,6 +43,9 @@ data_path = args.data_path
 model_path = args.model_path
 output_path = args.output_path
 
+os.system('mkdir -p ' + model_path)
+os.system('mkdir -p ' + output_path)
+
 # with open('data/cube_e_substeps_1804_predicted/metadata.json', 'rt') as f:
 with open(os.path.join(data_path, 'metadata.json'), 'rt') as f:
     metadata = json.loads(f.read())
