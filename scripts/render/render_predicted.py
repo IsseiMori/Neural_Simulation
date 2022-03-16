@@ -123,7 +123,7 @@ for j in range(len(data)):
 
         frame = cv2.putText(frame, 'Ground Truth #{:d}'.format(j), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
         
-        if args.simulator == 'mpm':
+        if args.mpm:
             frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
             frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
             frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)

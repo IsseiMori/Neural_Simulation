@@ -151,11 +151,16 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
 
         # If MPM and --restpos, need to extend position to 6 dim
         # If FLEX and not --restpos, remove restpos
-        d_pos = d['positions']
-        if is_mpm and restpos:
-            d_pos = np.concatenate([d['positions'][:,:,:,:3], d['positions'][:,:,:,:3]], axis=3)
-        elif not is_mpm and not restpos:
-            d_pos = d['positions'][:,:,:,3:]
+        if is_mpm:
+            if restpos:
+                d_pos = np.concatenate([d['positions'][:,:,:,:3], d['positions'][:,:,:,:3]], axis=3)
+            else:
+                d_pos = d['positions'][:,:,:,:3]
+        else:
+            if not restpos:
+                d_pos = d['positions'][:,:,:,3:]
+            else:
+                d_pos = d['positions']
 
 
         d['new_positions'] = add_grips(d_pos , d['shape_states'], d['scene_info'], restpos)

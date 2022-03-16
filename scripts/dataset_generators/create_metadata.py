@@ -25,7 +25,7 @@ parser.add_argument("--flex", help="Is this flex data?", action='store_true')
 parser.add_argument("--mpm", help="Is this mpm data?", action='store_true')
 parser.add_argument("--restpos", help="include respos?", action='store_true')
 
-parser.add_argument("--num_data", help="number of data to include", required=False, default=100, type=int)
+parser.add_argument("--num_data", help="number of data to include", required=False, default=-1, type=int)
 parser.add_argument("--offset", help="data load offset", required=False, default=0, type=int)
 parser.add_argument("--has_context", help="has context?", required=False, default=True, type=bool)
 
@@ -52,20 +52,20 @@ def main():
 
 
     files = glob.glob(os.path.join(args.data, "*.npy"))
-    files = files[args.offset:args.offset+args.num_data]
+    if args.num_data != -1:
+        files = files[args.offset:args.offset+args.num_data]
     files.sort(key = lambda f: int(re.sub('\D', '', f)))
 
 
 
     loaded = np.load(files[0], allow_pickle=True).item()
     loaded_positions = loaded['positions'][0] 
+    if args.mpm: loaded_positions = loaded_positions[:,:,:3]
         
     pos_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
     vel_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
     acc_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
     ys_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
-
-    total_frames = 0
 
 
 
@@ -74,7 +74,8 @@ def main():
     for file in files:
 
         loaded = np.load(file, allow_pickle=True).item()
-        loaded_positions = loaded['positions'][0] 
+        loaded_positions = loaded['positions'][0]
+        if args.mpm: loaded_positions = loaded_positions[:,:,:3]
 
         
         print(f'{file}', end="\r",)
@@ -119,6 +120,7 @@ def main():
     for file in files:
         loaded = np.load(file, allow_pickle=True).item()
         loaded_positions = loaded['positions'][0]
+        if args.mpm: loaded_positions = loaded_positions[:,:,:3]
 
         
         print(f'{file}', end="\r",)

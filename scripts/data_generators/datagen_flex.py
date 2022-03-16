@@ -25,7 +25,9 @@ args = parser.parse_args()
 
 
 dt = 1. / 60.
-out_dir = os.path.join("output/FLEX", args.scene)
+root_dir = os.environ.get('NSIMROOT')
+out_dir = os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/FLEX/partial/raw")
+
 os.system('mkdir -p ' + out_dir)
 
 if args.video:
@@ -153,19 +155,35 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         video.release()
 
 
-N_GRID = 5
-params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
-params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+for data_i in range(5000):
+    # clusterStiffness = rand_float(0.3, 0.7)
+    # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
+    # clusterPlasticCreep = rand_float(0.1, 0.3)
 
-data_i = 0
-for p1 in range(N_GRID):
-    for p2 in range(N_GRID):
-        for p3 in range(N_GRID):
-            clusterStiffness = params_range[0][0] + params_offset[0] * p1
-            clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
-            clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
-            print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-            simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-            data_i += 1
+    clusterStiffness = rand_float(0.3, 0.7)
+    clusterPlasticThreshold = 0.00001
+    clusterPlasticCreep = 0.1
+
+    print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+    simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+
 
 pyflex.clean()
+
+
+# N_GRID = 5
+# params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
+# params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+
+# data_i = 0
+# for p1 in range(N_GRID):
+#     for p2 in range(N_GRID):
+#         for p3 in range(N_GRID):
+#             clusterStiffness = params_range[0][0] + params_offset[0] * p1
+#             clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
+#             clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
+#             print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+#             simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+#             data_i += 1
+
+# pyflex.clean()
