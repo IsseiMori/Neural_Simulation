@@ -20,13 +20,13 @@ from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--scene", help="data type", required=True, type=str)
+parser.add_argument("--out", help="output dir", required=True, type=str)
 parser.add_argument("--video", help="write video", action='store_true')
 args = parser.parse_args()
 
 
 dt = 1. / 60.
-root_dir = os.environ.get('NSIMROOT')
-out_dir = os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/FLEX/partial/raw")
+out_dir = args.out
 
 os.system('mkdir -p ' + out_dir)
 
@@ -53,7 +53,7 @@ use_gpu = torch.cuda.is_available()
 def rand_float(lo, hi):
     return np.random.rand() * (hi - lo) + lo
 
-def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep):
+def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name):
 
     # clusterStiffness = rand_float(0.3, 0.7)
     # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
@@ -124,13 +124,13 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         'scene_info': scene_info
         }
 
-    with open(os.path.join(out_dir, '{:0>4}.npy'.format(str(data_i))), 'wb') as f:
+    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
         np.save(f, states)
 
 
     if args.video:
         image_folder = 'tmp'
-        video_name = os.path.join(out_dir, '{:0>4}.avi'.format(str(data_i)))
+        video_name = os.path.join(out_dir, data_name + '.avi')
 
         images = [img for img in os.listdir(image_folder) if img.endswith(".tga")]
         images.sort(key = lambda f: int(re.sub('\D', '', f)))
@@ -155,35 +155,37 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         video.release()
 
 
-for data_i in range(5000):
-    # clusterStiffness = rand_float(0.3, 0.7)
-    # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
-    # clusterPlasticCreep = rand_float(0.1, 0.3)
+# for data_i in range(5000):
+#     # clusterStiffness = rand_float(0.3, 0.7)
+#     # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
+#     # clusterPlasticCreep = rand_float(0.1, 0.3)
 
-    clusterStiffness = rand_float(0.3, 0.7)
-    clusterPlasticThreshold = 0.00001
-    clusterPlasticCreep = 0.1
+#     clusterStiffness = rand_float(0.3, 0.7)
+#     clusterPlasticThreshold = 0.00001
+#     clusterPlasticCreep = 0.1
 
-    print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-    simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+#     print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+#     simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+
+
+
+N_GRID = 5
+params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
+params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+
+data_i = 0
+for p1 in range(N_GRID):
+    for p2 in range(N_GRID):
+        for p3 in range(N_GRID):
+            clusterStiffness = params_range[0][0] + params_offset[0] * p1
+            clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
+            clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
+            data_name = str(p1) + "_" + str(p2) + "_" + str(p1)
+            print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+            simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name)
+            data_i += 1
+
+
 
 
 pyflex.clean()
-
-
-# N_GRID = 5
-# params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
-# params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-
-# data_i = 0
-# for p1 in range(N_GRID):
-#     for p2 in range(N_GRID):
-#         for p3 in range(N_GRID):
-#             clusterStiffness = params_range[0][0] + params_offset[0] * p1
-#             clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
-#             clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
-#             print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-#             simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-#             data_i += 1
-
-# pyflex.clean()

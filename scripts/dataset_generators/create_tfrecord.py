@@ -149,6 +149,12 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
         print(f'{file}', end="\r",)
         d = np.load(file, allow_pickle=True).item()
 
+
+        # Random sample to match MPM with FLEX
+        num_particles = 1060
+        random_indices = np.random.randint(d['positions'].shape[2], size=num_particles)
+        d['positions'] = d['positions'][:,:,random_indices]
+
         # If MPM and --restpos, need to extend position to 6 dim
         # If FLEX and not --restpos, remove restpos
         if is_mpm:

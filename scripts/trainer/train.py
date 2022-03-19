@@ -22,6 +22,7 @@ parser.add_argument("--save_steps", help="save_steps", required=False, type=int,
 parser.add_argument("--rollout_steps", help="rollout_steps", required=False, type=int, default=100000)
 parser.add_argument("--num_steps", help="num_steps", required=False, type=int, default=10000000)
 parser.add_argument("--dim", help="dimension of the positions", required=False, type=int, default=3)
+parser.add_argument("--force_rollout", help="force eval and rollout in the first step", action='store_true')
 
 args = parser.parse_args()
 
@@ -607,6 +608,8 @@ def train(simulator):
     # ds_eval = prepare_data_from_tfds(data_path, split='test', is_rollout=True)
     
     step = 0
+
+    is_first_step = True
     
     # if model_path is not None:
     files = glob.glob(os.path.join(model_path, 'model_*.pth'))
@@ -627,27 +630,24 @@ def train(simulator):
     try:
         for features, labels in ds:
 
-            try:
-                loss = one_step_estimator(simulator, features, labels, device, noise_std)
+            loss = one_step_estimator(simulator, features, labels, device, noise_std)
 
-                if step % log_steps == 0:
-                    writer.add_scalar("training_loss", loss.detach(), step)
-                    writer.add_scalar("lr", lr_new, step)
+            if step % log_steps == 0:
+                writer.add_scalar("training_loss", loss.detach(), step)
+                writer.add_scalar("lr", lr_new, step)
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-                lr_new = lr_init * (lr_decay ** (step/lr_decay_steps))
-                for g in optimizer.param_groups:
-                    g['lr'] = lr_new
+            lr_new = lr_init * (lr_decay ** (step/lr_decay_steps))
+            for g in optimizer.param_groups:
+                g['lr'] = lr_new
 
-                step += 1
-                print(f'Training step: {step}/{training_steps}. Loss: {loss}.', end="\r",)
-                if step >= training_steps:
-                        break
-            except:
-                print("Error Train")
+            step += 1
+            print(f'Training step: {step}/{training_steps}. Loss: {loss}.', end="\r",)
+            if step >= training_steps:
+                    break
 
             if step % save_steps == 0:
                 torch.save({
@@ -656,34 +656,27 @@ def train(simulator):
                     'optimizer_state_dict': optimizer.state_dict()
                 }, os.path.join(model_path, 'model_' + str(step) + '.pth'))
 
-            if step % eval_steps == 0:
-                try:
-                    eval_loss = eval_one_step(ds_eval, simulator, device, noise_std)
-                    writer.add_scalar("eval_loss", eval_loss, step)
-                except:
-                    print("Error Eval")
+            if step % eval_steps == 0 or (args.force_rollout and is_first_step):
+                eval_loss = eval_one_step(ds_eval, simulator, device, noise_std)
+                writer.add_scalar("eval_loss", eval_loss, step)
 
-            if step % rollout_steps == 0:
-                try:
-                    rollout_path = os.path.join(output_path, f'train_{step}')
-                    os.makedirs(rollout_path, exist_ok=True)
-                    
-                    ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
-                    eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
-                    
-                except:
-                    print("Error Rollouts")
-
-            if step % rollout_steps == 0:
-                try:
-                    rollout_path = os.path.join(output_path, f'test_{step}')
-                    os.makedirs(rollout_path, exist_ok=True)
-                    
-                    ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='test', is_rollout=True)
-                    eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
+            if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
+                rollout_path = os.path.join(output_path, f'train_{step}')
+                os.makedirs(rollout_path, exist_ok=True)
                 
-                except:
-                    print("Error Rollouts")
+                ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
+                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
+
+
+            if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
+                rollout_path = os.path.join(output_path, f'test_{step}')
+                os.makedirs(rollout_path, exist_ok=True)
+                
+                ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='test', is_rollout=True)
+                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
+
+
+            is_first_step = False
 
     except KeyboardInterrupt:
         pass

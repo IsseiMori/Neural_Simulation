@@ -13,9 +13,11 @@ spec:
         limits:
           memory: 100Mi
           cpu: 100m
+          nvidia.com/gpu: 1
         requests:
           memory: 100Mi
           cpu: 100m
+          nvidia.com/gpu: 1
       volumeMounts:
         - name: imori-fast-vol
           mountPath: /imori-fast-vol
@@ -32,8 +34,7 @@ spec:
                 operator: In
                 values:
                   - haosu
-              - key: gpu-type
+              - key: nvidia.com/gpu.product
                 operator: In
                 values:
-                  - 1080Ti
-                  - 2080Ti
+                  - NVIDIA-GeForce-RTX-2080-Ti

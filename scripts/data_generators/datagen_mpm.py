@@ -9,11 +9,12 @@ from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--scene", help="data type", required=True, type=str)
+parser.add_argument("--out", help="output dir", required=True, type=str)
+parser.add_argument("--flex", help="flex data path", required=True, type=str)
 parser.add_argument("--video", help="write video", action='store_true')
 args = parser.parse_args()
 
-root_dir = os.environ.get('NSIMROOT')
-out_dir = os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/MPM/partial/raw")
+out_dir = args.out
 os.system('mkdir -p ' + out_dir)
 
 
@@ -40,7 +41,7 @@ def set_parameters(env: TaichiEnv, yield_stress, E, nu):
     env.simulator.lam.fill(_lam)
 
 
-def simulate_scene(data_i, params):
+def simulate_scene(data_i, params, data_name):
     
     env.initialize()
 
@@ -51,7 +52,7 @@ def simulate_scene(data_i, params):
 
     # gripper_config = sample_gripper_config("BendTube", random=False)
 
-    d = np.load(os.path.join(root_dir, "tmp/Finetune/" + args.scene + "/FLEX/partial/raw/{:0>4}.npy".format(str(data_i))), allow_pickle=True).item()
+    d = np.load(os.path.join(args.flex, data_name + ".npy"), allow_pickle=True).item()
     
     # x, v, F, C, p1, p2, p3 = state['state']
     states_xvfcp = state['state']
@@ -112,43 +113,44 @@ def simulate_scene(data_i, params):
             'scene_info': d['scene_info']
             }
 
-    with open(os.path.join(out_dir, '{:0>4}.npy'.format(str(data_i))), 'wb') as f:
+    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
             np.save(f, states)
 
     if args.video:
-        animate(images, os.path.join(out_dir, '{:0>4}.webm'.format(str(data_i))))
+        animate(images, os.path.join(out_dir, data_name + '.webm'))
 
 
-for data_i in range(5000):
-    # YS = 5 + np.random.random()*195
-    # E = 100 + np.random.random()*2900
-    # nu = 0 + np.random.random()*0.45
+# for data_i in range(5000):
+#     # YS = 5 + np.random.random()*195
+#     # E = 100 + np.random.random()*2900
+#     # nu = 0 + np.random.random()*0.45
 
-    YS = 5
-    E = 100 + np.random.random()*2900
-    nu = 0
+#     YS = 5
+#     E = 100 + np.random.random()*2900
+#     nu = 0
 
-    params = []
-    params.append(YS)
-    params.append(E)
-    params.append(nu)
-    print(params)
-    simulate_scene(data_i, params)
+#     params = []
+#     params.append(YS)
+#     params.append(E)
+#     params.append(nu)
+#     print(params)
+#     simulate_scene(data_i, params)
 
 
 
-# N_GRID = 5
-# params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
-# params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+N_GRID = 5
+params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
+params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
 
-# data_i = 0
-# for p1 in range(N_GRID):
-#     for p2 in range(N_GRID):
-#         for p3 in range(N_GRID):
-#             params = []
-#             params.append(params_range[0][0] + params_offset[0] * p1)
-#             params.append(params_range[1][0] + params_offset[1] * p2)
-#             params.append(params_range[2][0] + params_offset[2] * p3)
-#             print(params)
-#             simulate_scene(data_i, params)
-#             data_i += 1
+data_i = 0
+for p1 in range(N_GRID):
+    for p2 in range(N_GRID):
+        for p3 in range(N_GRID):
+            params = []
+            params.append(params_range[0][0] + params_offset[0] * p1)
+            params.append(params_range[1][0] + params_offset[1] * p2)
+            params.append(params_range[2][0] + params_offset[2] * p3)
+            print(params)
+            data_name = str(p1) + "_" + str(p2) + "_" + str(p1)
+            simulate_scene(data_i, params, data_name)
+            data_i += 1
