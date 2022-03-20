@@ -34,7 +34,7 @@ if args.video:
     os.makedirs("tmp", exist_ok=True)
 
 
-grip_time = 1
+grip_time = 5
 dim_position = 4
 dim_velocity = 3
 dim_shape_state = 14
@@ -81,7 +81,7 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
 
 
     for r in range(grip_time):
-        gripper_config = sample_gripper_config(args.scene, random=False)
+        gripper_config = sample_gripper_config(args.scene, random=True)
         for i in range(time_step):
             shape_states_ = calc_shape_states(i * dt, gripper_config, dim_shape_state, dt, args.scene)
             pyflex.set_shape_states(shape_states_)
@@ -155,35 +155,38 @@ def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPla
         video.release()
 
 
-# for data_i in range(5000):
-#     # clusterStiffness = rand_float(0.3, 0.7)
-#     # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
-#     # clusterPlasticCreep = rand_float(0.1, 0.3)
+for data_i in range(10):
+    clusterStiffness = rand_float(0.3, 0.7)
+    clusterPlasticThreshold = rand_float(0.00001, 0.0005)
+    clusterPlasticCreep = rand_float(0.1, 0.3)
 
-#     clusterStiffness = rand_float(0.3, 0.7)
-#     clusterPlasticThreshold = 0.00001
-#     clusterPlasticCreep = 0.1
+    # clusterStiffness = rand_float(0.3, 0.7)
+    # clusterPlasticThreshold = 0.00001
+    # clusterPlasticCreep = 0.1
 
-#     print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-#     simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+    data_name = f'{data_i:05d}'
+    print(data_name)
+
+    print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+    simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name)
 
 
 
-N_GRID = 5
-params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
-params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+# N_GRID = 5
+# params_range = np.array([[0.3, 0.7], [0.00001, 0.0005], [0.1, 0.3]])
+# params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
 
-data_i = 0
-for p1 in range(N_GRID):
-    for p2 in range(N_GRID):
-        for p3 in range(N_GRID):
-            clusterStiffness = params_range[0][0] + params_offset[0] * p1
-            clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
-            clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
-            data_name = str(p1) + "_" + str(p2) + "_" + str(p1)
-            print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
-            simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name)
-            data_i += 1
+# data_i = 0
+# for p1 in range(N_GRID):
+#     for p2 in range(N_GRID):
+#         for p3 in range(N_GRID):
+#             clusterStiffness = params_range[0][0] + params_offset[0] * p1
+#             clusterPlasticThreshold = params_range[1][0] + params_offset[1] * p2
+#             clusterPlasticCreep = params_range[2][0] + params_offset[2] * p3
+#             data_name = str(p1) + "_" + str(p2) + "_" + str(p3)
+#             print(clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
+#             simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name)
+#             data_i += 1
 
 
 

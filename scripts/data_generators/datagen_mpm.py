@@ -151,6 +151,6 @@ for p1 in range(N_GRID):
             params.append(params_range[1][0] + params_offset[1] * p2)
             params.append(params_range[2][0] + params_offset[2] * p3)
             print(params)
-            data_name = str(p1) + "_" + str(p2) + "_" + str(p1)
+            data_name = str(p1) + "_" + str(p2) + "_" + str(p3)
             simulate_scene(data_i, params, data_name)
             data_i += 1
