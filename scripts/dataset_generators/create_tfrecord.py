@@ -156,14 +156,14 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
         print(f'{file}', end="\r",)
         d = np.load(file, allow_pickle=True).item()
 
-        # Ad-hoc method to concate 5 grip iterations in a sequence
-        positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
-        d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
-        d['positions'][0] = positions_collapsed
+        # # Ad-hoc method to concate 5 grip iterations in a sequence
+        # positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+        # d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+        # d['positions'][0] = positions_collapsed
 
-        shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
-        d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
-        d['shape_states'][0] = shape_states_collapsed
+        # shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+        # d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+        # d['shape_states'][0] = shape_states_collapsed
 
 
         # Random sample to match MPM with FLEX

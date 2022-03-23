@@ -12,17 +12,16 @@ from glpointrast import perspective, PointRasterizer
 from pytorch3d.loss import chamfer_distance
 
 
-root_dir = os.environ.get('NSIMROOT')
-data_name = "CompressTube"
-flex_path = os.path.join(root_dir, "tmp/BruteForce/" + data_name + "/FLEX/raw/*.npy")
-mpm_path = os.path.join(root_dir, "tmp/BruteForce/" + data_name + "/MPM/raw/*.npy")
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--flex_data", help="data dir", required=True, type=str)
+parser.add_argument("--mpm_data", help="data dir", required=True, type=str)
+parser.add_argument("--flex_depth", help="data dir", required=True, type=str)
+parser.add_argument("--mpm_depth", help="data dir", required=True, type=str)
+parser.add_argument("--out", help="output dir", required=True, type=str)
+args = parser.parse_args()
 
-flex_depth_path = os.path.join(root_dir, "tmp/BruteForce/" + data_name + "/FLEX/depth")
-mpm_depth_path = os.path.join(root_dir, "tmp/BruteForce/" + data_name + "/MPM/depth")
-
-out_path = os.path.join(root_dir, "tmp/BruteForce/" + data_name + "/sysid")
-
-os.system('mkdir -p ' + out_path)
+os.system('mkdir -p ' + args.out)
 
 
 
@@ -64,18 +63,20 @@ proj_matrix_inv = torch.Tensor(np.array([
 
 
 
-
-files_flex = glob.glob(flex_path)
+print(args.flex_data)
+files_flex = glob.glob(os.path.join(args.flex_data, "*.npy"))
 files_flex.sort(key = lambda f: int(re.sub('\\D', '', f)))
+
+print(files_flex)
 
 loss_data = []
 
 
 # Select corners
-files_flex = [
-                files_flex[0], files_flex[4], files_flex[19], files_flex[24],
-                files_flex[100], files_flex[104], files_flex[119], files_flex[124]
-            ]
+# files_flex = [
+#                 files_flex[0], files_flex[4], files_flex[19], files_flex[24],
+#                 files_flex[100], files_flex[104], files_flex[119], files_flex[124]
+#             ]
 
 # Loop over FLEX data
 for file_flex in files_flex:
@@ -84,11 +85,11 @@ for file_flex in files_flex:
     print(dnum_flex)
     
     d_flex = np.load(file_flex, allow_pickle=True).item()
-    depth_flex = np.load(os.path.join(flex_depth_path, dnum_flex, dnum_flex + ".npy"), allow_pickle=True)
+    depth_flex = np.load(os.path.join(args.flex_depth, dnum_flex, dnum_flex + ".npy"), allow_pickle=True)
     depth_flex = torch.Tensor(depth_flex).to('cuda')
 
 
-    files_mpm = glob.glob(mpm_path)
+    files_mpm = glob.glob(os.path.join(args.mpm_data, "*.npy"))
     files_mpm.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
     loss_data_mpm = []
@@ -100,7 +101,7 @@ for file_flex in files_flex:
         print(dnum_mpm)
 
         d_mpm = np.load(file_mpm, allow_pickle=True).item()
-        depth_mpm = np.load(os.path.join(mpm_depth_path, dnum_mpm, dnum_mpm + ".npy"), allow_pickle=True)
+        depth_mpm = np.load(os.path.join(args.mpm_depth, dnum_mpm, dnum_mpm + ".npy"), allow_pickle=True)
         depth_mpm = torch.Tensor(depth_mpm).to('cuda')
 
         # Set background to a reasonable depth
@@ -126,11 +127,11 @@ for file_flex in files_flex:
     loss_data.append(loss_data_mpm)
 
     loss_data_mpm = np.array(loss_data_mpm)
-    with open(os.path.join(out_path, dnum_flex + ".npy"), 'wb') as f:
+    with open(os.path.join(args.out, dnum_flex + ".npy"), 'wb') as f:
         np.save(f, loss_data_mpm)
 
 
 loss_data = np.array(loss_data)
-with open(os.path.join(out_path, "loss.npy"), 'wb') as f:
+with open(os.path.join(args.out, "loss.npy"), 'wb') as f:
     np.save(f, loss_data)
 

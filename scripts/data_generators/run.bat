@@ -18,3 +18,10 @@ python datagen_flex.py --scene=RiceGripMulti --out="/home/issei/Documents/UCSD/S
 
 
 python datagen_flex.py --video --scene=RiceGrip --out="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Grid/RiceGrip/FLEX/raw"
+
+
+python datagen_flex.py --video --scene=RiceGrip --out="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Grid/RiceGrip/FLEX/raw"
+
+python datagen_mpm.py --video  --scene=RiceGrip --out="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGrip/MPM/finetune/raw" --flex="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Grid/RiceGrip/FLEX/raw"
+
+python datagen_flex.py --video --scene=RiceGrip --out="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/FLEX/raw"

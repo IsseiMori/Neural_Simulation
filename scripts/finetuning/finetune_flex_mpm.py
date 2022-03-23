@@ -17,7 +17,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Create scene with material params")
 
 parser.add_argument("--data_path", help="data path", required=True, type=str)
-parser.add_argument("--model_pretrained_path", help="model path", required=True, type=str)
+parser.add_argument("--pretrained_model", help="model path", required=True, type=str)
 parser.add_argument("--model_path", help="model path", required=True, type=str)
 parser.add_argument("--output_path", help="output path", required=False, type=str, default="")
 parser.add_argument("--eval_steps", help="eval_steps", required=False, type=int, default=100000)
@@ -26,15 +26,18 @@ parser.add_argument("--save_steps", help="save_steps", required=False, type=int,
 parser.add_argument("--rollout_steps", help="rollout_steps", required=False, type=int, default=100000)
 parser.add_argument("--num_steps", help="num_steps", required=False, type=int, default=10000000)
 parser.add_argument("--dim", help="dimension of the positions", required=False, type=int, default=6)
+parser.add_argument("--force_rollout", help="force eval and rollout in the first step", action='store_true')
 
 args = parser.parse_args()
 
 
 data_path = args.data_path
-model_pretrained_path = args.model_pretrained_path
 model_path = args.model_path
 output_path = args.output_path
 pos_dim = args.dim
+
+os.system('mkdir -p ' + model_path)
+os.system('mkdir -p ' + output_path)
 
 
 
@@ -212,6 +215,8 @@ class SimulatorRolloutNet(torch.nn.Module):
         loss_positions = torch.where(non_kinematic_mask.bool(), loss_positions, torch.zeros_like(loss_positions))
         loss_positions = torch.sum(loss_positions) / num_non_kinematic
 
+        predicted_depths = []
+
         loss = 0
         for step, pred in enumerate(predictions):
             
@@ -219,6 +224,8 @@ class SimulatorRolloutNet(torch.nn.Module):
 
             points_predicted = pred[:n_kinetic_particles, 3:].float().contiguous() 
             depth_predicted = raster_func.apply(points_predicted)
+
+            predicted_depths.append(depth_predicted)
 
             depth_true = ground_truth_depths[step]
 
@@ -269,14 +276,29 @@ class SimulatorRolloutNet(torch.nn.Module):
 
         loss /= self.steps
 
+        predicted_depths = torch.stack(predicted_depths)
+
 
         
-        return loss, loss_positions, predictions, ground_truth_positions
+        return loss, loss_positions, predictions, ground_truth_positions, predicted_depths, ground_truth_depths
 
 
+def save_depth_image(depth_data, file_name):
+    _min = np.amin(depth_data[depth_data != 0])
+    _max = np.amax(depth_data[depth_data != 0])
+    # print(_min)
+    # print(_max)
+    _min = -0.7
+    _max = -0.4
+    disp_norm = (depth_data - _min) * 255.0 / (_max - _min)
+    disp_norm = np.clip(disp_norm, a_min = 0, a_max = 255)
+    disp_norm[depth_data == 0] = 0
+    disp_norm = np.uint8(disp_norm)
+    data = im.fromarray(disp_norm).convert('RGB')
+    data.save(file_name)
 
 
-def save_optimization_rollout(features, predictions, ground_truth_positions, step, loss):
+def save_optimization_rollout(features, predictions, ground_truth_positions, predicted_depths, ground_truth_depths, step, loss):
     initial_positions = features['position'][:, 0:INPUT_SEQUENCE_LENGTH]
 
     output_dict = {
@@ -289,12 +311,23 @@ def save_optimization_rollout(features, predictions, ground_truth_positions, ste
         'loss': loss.to("cpu").detach().numpy(),
     }
 
+    rollout_path = os.path.join(output_path, f'train_{step}')
+    os.makedirs(rollout_path, exist_ok=True)
+
     
     output_dict['metadata'] = metadata
     filename = f'rollout_{step}.pkl'
-    filename = os.path.join(output_path, filename)
+    filename = os.path.join(rollout_path, filename)
     with open(filename, 'wb') as f:
         pickle.dump(output_dict, f)
+
+    for step_i in range(len(predicted_depths)):
+        save_depth_image(predicted_depths[step_i].to("cpu").detach().numpy(), os.path.join(rollout_path, f'predicted_{step_i:05d}.png'))
+
+    for step_i in range(len(ground_truth_depths)):
+        save_depth_image(ground_truth_depths[step_i].to("cpu").detach().numpy(), os.path.join(rollout_path, f'true_{step_i:05d}.png'))
+
+
 
 
 
@@ -302,19 +335,21 @@ def train(simulator):
 
     writer = SummaryWriter(model_path)
 
-    num_particles = 558
+    num_particles = 1006
 
     num_inference_steps = 25
     model = SimulatorRolloutNet(simulator, num_inference_steps)
 
 
-    checkpoint = torch.load(os.path.join(model_pretrained_path, 'model_300000.pth'))
+    checkpoint = torch.load(args.pretrained_model)
     simulator.load_state_dict(checkpoint['model_state_dict'])
     # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     step = 0
 
 
     ds = prepare_data_from_tfds(data_path=data_path, split='train', is_rollout=True)
+
+    is_first_step = True
 
 
     lr_init = 1e-4
@@ -343,12 +378,12 @@ def train(simulator):
     #for step_i in range(training_steps):
     for example_i, (features, labels) in enumerate(ds):
         # Randomly sample 558 particles from the mpm data to match with the pretrained model
-        features_obj = features['position'][:-360]
-        random_sampled_particles = features_obj[np.random.choice(len(features_obj), size=num_particles, replace=False)]
-        features['position'] =  np.concatenate([random_sampled_particles, features['position'][-360:]])
+        # features_obj = features['position'][:-360]
+        # random_sampled_particles = features_obj[np.random.choice(len(features_obj), size=num_particles, replace=False)]
+        # features['position'] =  np.concatenate([random_sampled_particles, features['position'][-360:]])
 
-        features['n_particles_per_example'][0] = num_particles + 360
-        features['particle_type'] = np.concatenate([features['particle_type'][:num_particles], features['particle_type'][-360:]])
+        # features['n_particles_per_example'][0] = num_particles + 360
+        # features['particle_type'] = np.concatenate([features['particle_type'][:num_particles], features['particle_type'][-360:]])
         
         for step_i in range(training_steps):
 
@@ -356,11 +391,11 @@ def train(simulator):
             
 
 
-            loss, loss_positions, predictions, ground_truth_positions = model(features)
+            loss, loss_positions, predictions, ground_truth_positions, predicted_depths, ground_truth_depths = model(features)
 
 
-            if step % rollout_steps == 0:
-                save_optimization_rollout(features, predictions, ground_truth_positions, step, loss)
+            if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
+                save_optimization_rollout(features, predictions, ground_truth_positions, predicted_depths, ground_truth_depths, step, loss)
 
             # if step % log_steps == 0:
             if True:
@@ -391,6 +426,8 @@ def train(simulator):
                     'model_state_dict': simulator.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict()
                 }, os.path.join(model_path, 'model_' + str(step) + '.pth'))
+
+            is_first_step = False
 
 
 train(simulator)

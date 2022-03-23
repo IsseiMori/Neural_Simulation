@@ -10,24 +10,21 @@ from utils import *
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--scene", help="scene name", required=True, type=str)
+parser.add_argument("--data", help="data dir", required=True, type=str)
+parser.add_argument("--out", help="output dir", required=True, type=str)
 args = parser.parse_args()
 
 
-root_dir = os.environ.get('NSIMROOT')
-mpm_path = os.path.join(root_dir, "tmp/BruteForce/" + args.scene + "/MPM/raw/*.npy")
-out_path = os.path.join(root_dir, "tmp/BruteForce/" + args.scene + "/MPM/depth")
-
-os.system('mkdir -p ' + out_path)
+os.system('mkdir -p ' + args.out)
 
 
-files = glob.glob(mpm_path)
+files = glob.glob(os.path.join(args.data, "*.npy"))
 files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
 
 for file in files:
 
-    depth_out_path = os.path.join(out_path, os.path.splitext(file)[0].split('/')[-1])
+    depth_out_path = os.path.join(args.out, os.path.splitext(file)[0].split('/')[-1])
     os.system('mkdir -p ' + depth_out_path)
 
     depths = []
