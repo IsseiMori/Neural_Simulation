@@ -52,16 +52,29 @@ def main():
 
 
     files = glob.glob(os.path.join(args.data, "*.npy"))
+    files.sort(key = lambda f: int(re.sub('\D', '', f)))
+
     if args.num_data != -1:
         files = files[args.offset:args.offset+args.num_data]
-    files.sort(key = lambda f: int(re.sub('\D', '', f)))
 
 
 
     loaded = np.load(files[0], allow_pickle=True).item()
+
+    # Ad-hoc method to concate 5 grip iterations in a sequence
+    d = loaded
+    positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+    d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+    d['positions'][0] = positions_collapsed
+    shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+    d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+    d['shape_states'][0] = shape_states_collapsed
+    loaded = d
+
+
     loaded_positions = loaded['positions'][0] 
     if args.mpm: loaded_positions = loaded_positions[:,:,:3]
-        
+
     pos_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
     vel_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
     acc_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
@@ -74,6 +87,17 @@ def main():
     for file in files:
 
         loaded = np.load(file, allow_pickle=True).item()
+
+        # Ad-hoc method to concate 5 grip iterations in a sequence
+        d = loaded
+        positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+        d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+        d['positions'][0] = positions_collapsed
+        shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+        d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+        d['shape_states'][0] = shape_states_collapsed
+        loaded = d
+
         loaded_positions = loaded['positions'][0]
         if args.mpm: loaded_positions = loaded_positions[:,:,:3]
 
@@ -119,6 +143,17 @@ def main():
 
     for file in files:
         loaded = np.load(file, allow_pickle=True).item()
+
+        # Ad-hoc method to concate 5 grip iterations in a sequence
+        d = loaded
+        positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+        d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+        d['positions'][0] = positions_collapsed
+        shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+        d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+        d['shape_states'][0] = shape_states_collapsed
+        loaded = d
+
         loaded_positions = loaded['positions'][0]
         if args.mpm: loaded_positions = loaded_positions[:,:,:3]
 

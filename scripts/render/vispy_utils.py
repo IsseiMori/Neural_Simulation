@@ -163,35 +163,39 @@ def particlify_box(center, half_edge, quat):
 
     # initial spacing
     offset_height = 0.02
-    offset_width = 0.02
+    offset_width1 = 0.02
+    offset_width2 = 0.02
     
-    half_width = half_edge[0] # assume width = depth
+    half_width1 = half_edge[0]
     half_height = half_edge[1]
+    half_width2 = half_edge[2]
 
     particle_count_height = math.ceil(half_height * 2 / offset_height)
-    particle_count_width = math.ceil(half_width * 2 / offset_width)
+    particle_count_width1 = math.ceil(half_width1 * 2 / offset_width1)
+    particle_count_width2 = math.ceil(half_width2 * 2 / offset_width2)
 
     offset_height = half_height * 2 / particle_count_height
-    offset_width = half_width * 2 / particle_count_width
+    offset_width1 = half_width1 * 2 / particle_count_width1
+    offset_width2 = half_width2 * 2 / particle_count_width2
 
 
-    local_bottom_corner_pos = np.array([-half_width, -half_height, - half_width])
+    local_bottom_corner_pos = np.array([-half_width1, -half_height, - half_width2])
 
 
     for h in range(0, particle_count_height + 1):
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([offset_width * w, offset_height * h, 0]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([half_width * 2, offset_height * h, offset_width * w]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([half_width * 2 - offset_width * w, offset_height * h, half_width * 2]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([0, offset_height * h, half_width * 2 - offset_width * w]))
+        for w in range(0, particle_count_width1):
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * w, offset_height * h, 0]))
+        for w in range(0, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([half_width1 * 2, offset_height * h, offset_width2 * w]))
+        for w in range(0, particle_count_width1):
+            pos.append(local_bottom_corner_pos + np.array([half_width1 * 2 - offset_width2 * w, offset_height * h, half_width2 * 2]))
+        for w in range(0, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([0, offset_height * h, half_width2 * 2 - offset_width2 * w]))
 
-    for r in range(1, particle_count_width):
-        for c in range(1, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([offset_width * r, half_height * 2, offset_width * c]))
-            pos.append(local_bottom_corner_pos + np.array([offset_width * r, 0, offset_width * c]))
+    for r in range(1, particle_count_width1):
+        for c in range(1, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * r, half_height * 2, offset_width2 * c]))
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * r, 0, offset_width2 * c]))
         
 
     pos = np.asarray(pos, dtype=np.float64)
@@ -219,13 +223,12 @@ def add_grips(positions, shape_states, half_edge):
 
                 pos = shape_states[r, i][i_grip][0:3]
                 quat = shape_states[r, i][i_grip][6:10]
-                pos_grip = particlify_box(pos, half_edge, quat)
+                pos_grip = particlify_box(pos, half_edge[i_grip], quat)
 
                 pos_grips.append(pos_grip)
 
-            pos_grips = np.array(pos_grips)
+            pos_grips = np.vstack(pos_grips)
             pos_grips = pos_grips.reshape(-1, pos_grips.shape[-1])
-
 
             pos_grip_iter.append(np.concatenate((positions[r,i], pos_grips), 0))
         pos_all.append(pos_grip_iter)

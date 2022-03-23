@@ -41,5 +41,6 @@ python test_FluidFall.py
 
 # Run FLEX data generate script
 ```
-python data.py --video --scene=CompressTube
+python datagen_flex.py --scene=RiceGrip --out="raw" --fixed_grip --video
+
 ```

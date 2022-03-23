@@ -20,6 +20,7 @@ parser.add_argument("--eval_steps", help="eval_steps", required=False, type=int,
 parser.add_argument("--num_eval_steps", help="num_eval_steps", required=False, type=int, default=1000)
 parser.add_argument("--save_steps", help="save_steps", required=False, type=int, default=1000)
 parser.add_argument("--rollout_steps", help="rollout_steps", required=False, type=int, default=100000)
+parser.add_argument("--num_rollouts", help="number of rollouts", required=False, type=int, default=10)
 parser.add_argument("--num_steps", help="num_steps", required=False, type=int, default=10000000)
 parser.add_argument("--dim", help="dimension of the positions", required=False, type=int, default=3)
 parser.add_argument("--force_rollout", help="force eval and rollout in the first step", action='store_true')
@@ -665,7 +666,7 @@ def train(simulator):
                 os.makedirs(rollout_path, exist_ok=True)
                 
                 ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
-                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
+                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
 
 
             if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
@@ -673,7 +674,7 @@ def train(simulator):
                 os.makedirs(rollout_path, exist_ok=True)
                 
                 ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='test', is_rollout=True)
-                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=10)
+                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
 
 
             is_first_step = False

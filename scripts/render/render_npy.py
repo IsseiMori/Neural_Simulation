@@ -42,6 +42,17 @@ files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
 for file in files:
     d = np.load(file, allow_pickle=True).item()
+
+    # Ad-hoc method to concate 5 grip iterations in a sequence
+    positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+    d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+    d['positions'][0] = positions_collapsed
+
+    shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+    d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+    d['shape_states'][0] = shape_states_collapsed
+
+
     if args.restpos: 
         d['new_positions'] = vispy_utils.add_grips(d['positions'][:,:,:,3:] , d['shape_states'], d['scene_info'])[:,:,:,:3]
     else:
@@ -77,6 +88,11 @@ frame = 0
 
 total_frames = len(data) * (len(data[0]['new_positions'][0]) - 5)
 seq_length = len(data[0]['new_positions'][0])-5
+# grip_seq_length = len(data[0]['new_positions'][0])
+# seq_length = len(data[0]['new_positions']) * grip_seq_length - 5
+# total_frames = len(data) * seq_length
+
+
 
 print(len(data[0]['new_positions'][0])-5)
 
@@ -89,6 +105,11 @@ def update(event):
     data_i = math.floor(frame / seq_length)
     frame_i = frame % seq_length
     ppos = data[data_i]['new_positions'][0, frame_i].astype(np.float32) - np.array([0, 0, 0])
+
+    # data_i = math.floor(frame / seq_length)
+    # grip_i = math.floor(frame % seq_length / grip_seq_length)
+    # frame_i = frame % grip_seq_length
+    # ppos = data[data_i]['new_positions'][grip_i, frame_i].astype(np.float32) - np.array([0, 0, 0])
 
     p1.set_data(ppos[:particle_count], edge_color='black', face_color='white')
     p2.set_data(ppos[particle_count:], edge_color='red', face_color='white')
@@ -105,7 +126,8 @@ def update(event):
 # start animation
 timer = app.Timer()
 timer.connect(update)
-timer.start(interval=1. / 30., iterations=len(data) * len(data[0]['positions'][0]))
+timer.start(interval=1. / 30., iterations=total_frames)
+
 
 c.show()
 app.run()

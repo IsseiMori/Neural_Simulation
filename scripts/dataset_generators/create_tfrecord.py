@@ -53,41 +53,46 @@ def rotate(p, quat):
     return np.dot(R, p)
 
 
+# copy of vispy_utils.py particlify_box()
 def particlify_box(center, half_edge, quat):
     
     pos = []
 
     # initial spacing
     offset_height = 0.02
-    offset_width = 0.02
+    offset_width1 = 0.02
+    offset_width2 = 0.02
     
-    half_width = half_edge[0] # assume width = depth
+    half_width1 = half_edge[0]
     half_height = half_edge[1]
+    half_width2 = half_edge[2]
 
     particle_count_height = math.ceil(half_height * 2 / offset_height)
-    particle_count_width = math.ceil(half_width * 2 / offset_width)
+    particle_count_width1 = math.ceil(half_width1 * 2 / offset_width1)
+    particle_count_width2 = math.ceil(half_width2 * 2 / offset_width2)
 
     offset_height = half_height * 2 / particle_count_height
-    offset_width = half_width * 2 / particle_count_width
+    offset_width1 = half_width1 * 2 / particle_count_width1
+    offset_width2 = half_width2 * 2 / particle_count_width2
 
 
-    local_bottom_corner_pos = np.array([-half_width, -half_height, - half_width])
+    local_bottom_corner_pos = np.array([-half_width1, -half_height, - half_width2])
 
 
     for h in range(0, particle_count_height + 1):
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([offset_width * w, offset_height * h, 0]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([half_width * 2, offset_height * h, offset_width * w]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([half_width * 2 - offset_width * w, offset_height * h, half_width * 2]))
-        for w in range(0, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([0, offset_height * h, half_width * 2 - offset_width * w]))
+        for w in range(0, particle_count_width1):
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * w, offset_height * h, 0]))
+        for w in range(0, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([half_width1 * 2, offset_height * h, offset_width2 * w]))
+        for w in range(0, particle_count_width1):
+            pos.append(local_bottom_corner_pos + np.array([half_width1 * 2 - offset_width2 * w, offset_height * h, half_width2 * 2]))
+        for w in range(0, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([0, offset_height * h, half_width2 * 2 - offset_width2 * w]))
 
-    for r in range(1, particle_count_width):
-        for c in range(1, particle_count_width):
-            pos.append(local_bottom_corner_pos + np.array([offset_width * r, half_height * 2, offset_width * c]))
-            pos.append(local_bottom_corner_pos + np.array([offset_width * r, 0, offset_width * c]))
+    for r in range(1, particle_count_width1):
+        for c in range(1, particle_count_width2):
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * r, half_height * 2, offset_width2 * c]))
+            pos.append(local_bottom_corner_pos + np.array([offset_width1 * r, 0, offset_width2 * c]))
         
 
     pos = np.asarray(pos, dtype=np.float64)
@@ -106,6 +111,7 @@ def particlify_box(center, half_edge, quat):
 
 """
 respos: if restpos is True, grip particles will be expanded to 6 dim
+almost same as vispy_utils.py, respos is different
 """
 def add_grips(positions, shape_states, half_edge, restpos=False):
     pos_all = []
@@ -119,12 +125,12 @@ def add_grips(positions, shape_states, half_edge, restpos=False):
 
                 pos = shape_states[r, i][i_grip][0:3]
                 quat = shape_states[r, i][i_grip][6:10]
-                pos_grip = particlify_box(pos, half_edge, quat)
+                pos_grip = particlify_box(pos, half_edge[i_grip], quat)
 
                 if restpos: pos_grips.append(np.concatenate([pos_grip, pos_grip], axis=1))
                 else : pos_grips.append(pos_grip)
 
-            pos_grips = np.array(pos_grips)
+            pos_grips = np.vstack(pos_grips)
             pos_grips = pos_grips.reshape(-1, pos_grips.shape[-1])
 
 
@@ -135,6 +141,7 @@ def add_grips(positions, shape_states, half_edge, restpos=False):
     pos_all = np.asarray(pos_all, dtype=np.float64)
 
     return pos_all
+
 
 def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTEXT=True, is_mpm=True, restpos=False):
 
@@ -149,11 +156,20 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
         print(f'{file}', end="\r",)
         d = np.load(file, allow_pickle=True).item()
 
+        # Ad-hoc method to concate 5 grip iterations in a sequence
+        positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])
+        d['positions'] = np.zeros((1, d['positions'].shape[0] * d['positions'].shape[1], d['positions'].shape[2], d['positions'].shape[3]))
+        d['positions'][0] = positions_collapsed
+
+        shape_states_collapsed = d['shape_states'].reshape(-1, d['shape_states'].shape[2], d['shape_states'].shape[3])
+        d['shape_states'] = np.zeros((1, d['shape_states'].shape[0] * d['shape_states'].shape[1], d['shape_states'].shape[2], d['shape_states'].shape[3]))
+        d['shape_states'][0] = shape_states_collapsed
+
 
         # Random sample to match MPM with FLEX
-        num_particles = 1060
-        random_indices = np.random.randint(d['positions'].shape[2], size=num_particles)
-        d['positions'] = d['positions'][:,:,random_indices]
+        # num_particles = 1060
+        # random_indices = np.random.randint(d['positions'].shape[2], size=num_particles)
+        # d['positions'] = d['positions'][:,:,random_indices]
 
         # If MPM and --restpos, need to extend position to 6 dim
         # If FLEX and not --restpos, remove restpos
