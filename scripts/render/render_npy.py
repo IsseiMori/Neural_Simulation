@@ -42,6 +42,7 @@ files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
 for file in files:
     d = np.load(file, allow_pickle=True).item()
+    print(file)
 
     # Ad-hoc method to concate 5 grip iterations in a sequence
     positions_collapsed = d['positions'].reshape(-1, d['positions'].shape[2], d['positions'].shape[3])

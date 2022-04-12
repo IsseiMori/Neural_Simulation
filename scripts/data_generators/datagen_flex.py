@@ -51,8 +51,6 @@ pyflex.init()
 
 use_gpu = torch.cuda.is_available()
 
-def rand_float(lo, hi):
-    return np.random.rand() * (hi - lo) + lo
 
 def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name):
 

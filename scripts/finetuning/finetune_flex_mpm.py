@@ -298,7 +298,7 @@ def save_depth_image(depth_data, file_name):
     data.save(file_name)
 
 
-def save_optimization_rollout(features, predictions, ground_truth_positions, predicted_depths, ground_truth_depths, step, loss):
+def save_optimization_rollout(features, predictions, ground_truth_positions, predicted_depths, ground_truth_depths, step, data_i, loss):
     initial_positions = features['position'][:, 0:INPUT_SEQUENCE_LENGTH]
 
     output_dict = {
@@ -311,7 +311,7 @@ def save_optimization_rollout(features, predictions, ground_truth_positions, pre
         'loss': loss.to("cpu").detach().numpy(),
     }
 
-    rollout_path = os.path.join(output_path, f'train_{step}')
+    rollout_path = os.path.join(output_path, f'train_{step}', str(data_i))
     os.makedirs(rollout_path, exist_ok=True)
 
     
@@ -348,6 +348,7 @@ def train(simulator):
 
 
     ds = prepare_data_from_tfds(data_path=data_path, split='train', is_rollout=True)
+    ds_eval = prepare_data_from_tfds(data_path=data_path, split='train', is_rollout=True)
 
     is_first_step = True
 
@@ -395,7 +396,13 @@ def train(simulator):
 
 
             if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
-                save_optimization_rollout(features, predictions, ground_truth_positions, predicted_depths, ground_truth_depths, step, loss)
+                data_e_i = 0
+                for example_i_e, (features_e, labels_e) in enumerate(ds_eval):
+                    loss_e, loss_positions_e, predictions_e, ground_truth_positions_e, predicted_depths_e, ground_truth_depths_e = model(features_e)
+                    save_optimization_rollout(features_e, predictions_e, ground_truth_positions_e, predicted_depths_e, ground_truth_depths_e, step, example_i_e, loss)
+                    data_e_i += 1
+                    if data_e_i >= 7:
+                        break
 
             # if step % log_steps == 0:
             if True:

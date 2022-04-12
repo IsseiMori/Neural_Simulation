@@ -50,7 +50,7 @@ def simulate_scene(data_i, params, data_name):
     state = env.get_state()
 
 
-    # gripper_config = sample_gripper_config("BendTube", random=False)
+    gripper_config = sample_gripper_config("BendTube", random=False)
 
     d = np.load(os.path.join(args.flex, data_name + ".npy"), allow_pickle=True).item()
     
@@ -80,11 +80,14 @@ def simulate_scene(data_i, params, data_name):
 
     images = []
     states = []
+    # gird_m = []
 
     for frame in range(n_frames-1):
         print(f'{frame}', end="\r",)
 
         state = env.get_state()
+
+        # gird_m.append(env.simulator.grid_m.to_numpy())
         
         positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
         sts = np.array(state['state'][4:])
@@ -116,11 +119,14 @@ def simulate_scene(data_i, params, data_name):
     with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
             np.save(f, states)
 
+    # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
+    #         np.save(f, np.array(gird_m))
+
     if args.video:
         animate(images, os.path.join(out_dir, data_name + '.webm'))
 
 
-for data_i in range(10):
+for data_i in range(1):
     # YS = 5 + np.random.random()*195
     # E = 100 + np.random.random()*2900
     # nu = 0 + np.random.random()*0.45
@@ -132,16 +138,16 @@ for data_i in range(10):
     N_GRID = 5
     params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
     params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-    YS = params_range[0][0] + params_offset[0] * 4
+    YS = params_range[0][0] + params_offset[0] * 3
     E = params_range[1][0] + params_offset[1] * 1
-    nu = params_range[2][0] + params_offset[2] * 4
+    nu = params_range[2][0] + params_offset[2] * 3
 
     params = []
     params.append(YS)
     params.append(E)
     params.append(nu)
     print(params)
-    data_name = f'{data_i:05d}'
+    data_name = f'{data_i:04d}'
     simulate_scene(data_i, params, data_name)
 
 

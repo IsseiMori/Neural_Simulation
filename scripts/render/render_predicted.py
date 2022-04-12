@@ -138,3 +138,40 @@ for j in range(len(data)):
         out.write(frame)
 
 out.release()
+
+
+# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+# out_name = (args.data + ".avi").replace("*", "all")
+# out = cv2.VideoWriter(
+#     out_name,
+#     fourcc, 30, (800, 600))
+
+
+# for j in range(len(data)):
+#     offset = j * seq_length * 2
+#     for i in range(seq_length):
+#         img_gt = images[offset+i]
+#         img_pd = images[offset+i+seq_length]
+
+#         frame = np.zeros((600, 800, 3), dtype=np.uint8)
+#         frame = img_pd.astype(np.uint8)[:,:,0:3]
+
+#         # mse = ((data[j]['ground_truth_rollout'][:,:n_kinetic_particles] - data[j]['predicted_rollout'][:,:n_kinetic_particles])**2).mean()
+
+#         # frame = cv2.putText(frame, 'Ground Truth #{:d}'.format(j), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        
+#         # if args.flex:
+#         #     frame = cv2.putText(frame, 'clusterStiffness = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         #     frame = cv2.putText(frame, 'clusterPlasticThreshold = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         #     frame = cv2.putText(frame, 'clusterPlasticCreep = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         # else:
+#         #     frame = cv2.putText(frame, 'YS = {:f}'.format(data[j]['global_context'][0][0]), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         #     frame = cv2.putText(frame, 'E = {:f}'.format(data[j]['global_context'][0][1]), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         #     frame = cv2.putText(frame, 'nu = {:f}'.format(data[j]['global_context'][0][2]), (30, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+#         # frame = cv2.putText(frame, 'Predicted Result #{:d} (MSE = {:.5f})'.format(j, mse), (800+30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+#         # frame = cv2.putText(frame, 'Frame = {:d}'.format(j), (800+30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+#         out.write(frame)
+
+# out.release()

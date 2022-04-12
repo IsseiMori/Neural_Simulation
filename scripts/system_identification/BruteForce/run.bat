@@ -19,3 +19,6 @@ python bf_loss.py \
 --mpm_data=../../../tmp/BruteForce/RiceGrip/MPM/raw \
 --mpm_depth=../../../tmp/BruteForce/RiceGrip/MPM/depth \
 --out=../../../tmp/BruteForce/RiceGrip/sysid
+
+
+python mpm_depth_render.py --data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/MPM/raw --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/MPM/depth

@@ -75,11 +75,12 @@ def main():
     loaded_positions = loaded['positions'][0] 
     if args.mpm: loaded_positions = loaded_positions[:,:,:3]
 
-    pos_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
-    vel_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
-    acc_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
-    ys_mean = np.zeros_like(loaded_positions[0, :]).astype(np.float64)
+    pos_mean = np.zeros_like(loaded_positions[0, 0, :]).astype(np.float64)
+    vel_mean = np.zeros_like(loaded_positions[0, 0, :]).astype(np.float64)
+    acc_mean = np.zeros_like(loaded_positions[0, 0, :]).astype(np.float64)
+    ys_mean = np.zeros_like(loaded_positions[0, 0, :]).astype(np.float64)
 
+    vels = []
 
 
 
@@ -109,9 +110,11 @@ def main():
             next_vel = loaded_positions[i+2].astype(np.float32) - loaded_positions[i+1].astype(np.float32)
             curr_acc = next_vel - prev_vel
 
-            pos_mean += loaded_positions[i].astype(np.float64)
-            vel_mean += prev_vel
-            acc_mean += curr_acc
+            pos_mean += np.mean(loaded_positions[i].astype(np.float64), axis=0)
+            vel_mean += np.mean(prev_vel, axis=0)
+            acc_mean += np.mean(curr_acc, axis=0)
+
+            vels.append(prev_vel)
             
             total_frames += 1
         
@@ -136,10 +139,15 @@ def main():
 
 
 
+    # vel_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
+    # acc_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
 
-    pos_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
-    vel_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
-    acc_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
+    vel_var = np.zeros(loaded_positions.shape[-1]).astype(np.float64)
+    acc_var = np.zeros(loaded_positions.shape[-1]).astype(np.float64)
+
+    test_std = []
+
+    total_particles = 0
 
     for file in files:
         loaded = np.load(file, allow_pickle=True).item()
@@ -165,18 +173,18 @@ def main():
             next_vel = loaded_positions[i+2].astype(np.float32) - loaded_positions[i+1].astype(np.float32)
             curr_acc = next_vel - prev_vel
 
-            vel_var += (prev_vel - vel_mean)**2
-            acc_var += (curr_acc - acc_mean)**2
+            vel_var += np.sum((prev_vel - vel_mean)**2, axis=0)
+            acc_var += np.sum((curr_acc - acc_mean)**2, axis=0)
+
+            total_particles += prev_vel.shape[0]
+
+            test_std.append(prev_vel)
 
 
-
-
-    vel_std = np.sqrt(vel_var / total_frames)
-    acc_std = np.sqrt(acc_var / total_frames)
-    vel_std = np.std(vel_std, axis=0)
-    acc_std = np.std(acc_std, axis=0)
-    vel_mean_final = np.mean(vel_mean, axis=0)
-    acc_mean_final = np.mean(acc_mean, axis=0)
+    vel_std = np.sqrt(vel_var / total_particles)
+    acc_std = np.sqrt(acc_var / total_particles)
+    vel_mean_final = vel_mean
+    acc_mean_final = acc_mean
 
 
 

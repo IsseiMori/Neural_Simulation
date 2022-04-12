@@ -9,6 +9,10 @@ from PIL import Image
 import re
 
 
+def rand_float(lo, hi):
+    return np.random.rand() * (hi - lo) + lo
+
+
 def quatFromAxisAngle(axis, angle):
     axis /= np.linalg.norm(axis)
 
@@ -327,9 +331,13 @@ def calc_shape_states(t, gripper_config, dim_shape_state, dt, data_type):
 def init_scene(pyflex, data_type, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep):
 
     if data_type == "RiceGrip":
-        x = 10
-        y = 10
-        z = 10
+        # x = 10
+        # y = 10
+        # z = 10
+
+        x = rand_float(8.0, 10.0)
+        y = rand_float(8.0, 10.0)
+        z = rand_float(8.0, 10.0)
 
         scene_params = np.array([x, y, z, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep])
         pyflex.set_scene(5, scene_params, 0)
@@ -344,9 +352,14 @@ def init_scene(pyflex, data_type, clusterStiffness, clusterPlasticThreshold, clu
         return np.stack((halfEdge, halfEdge))
 
     elif data_type == "RiceGripMulti":
-        x = 10
-        y = 10
-        z = 10
+        # x = 10
+        # y = 10
+        # z = 10
+
+        x = rand_float(8.0, 10.0)
+        y = rand_float(8.0, 10.0)
+        z = rand_float(8.0, 10.0)
+
 
         scene_params = np.array([x, y, z, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep])
         pyflex.set_scene(5, scene_params, 0)
