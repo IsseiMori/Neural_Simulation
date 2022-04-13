@@ -81,6 +81,7 @@ def simulate_scene(data_i, params, data_name):
     images = []
     states = []
     # gird_m = []
+    # ppos = []
 
     for frame in range(n_frames-1):
         print(f'{frame}', end="\r",)
@@ -88,6 +89,7 @@ def simulate_scene(data_i, params, data_name):
         state = env.get_state()
 
         # gird_m.append(env.simulator.grid_m.to_numpy())
+        # ppos.append(env.simulator.x.to_numpy())
         
         positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
         sts = np.array(state['state'][4:])
@@ -116,11 +118,13 @@ def simulate_scene(data_i, params, data_name):
             'scene_info': d['scene_info']
             }
 
-    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
-            np.save(f, states)
+    # with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
+    #         np.save(f, states)
 
     # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
     #         np.save(f, np.array(gird_m))
+    with open(os.path.join(out_dir, 'ppos_' + data_name + '.npy'), 'wb') as f:
+            np.save(f, np.array(ppos))
 
     if args.video:
         animate(images, os.path.join(out_dir, data_name + '.webm'))
