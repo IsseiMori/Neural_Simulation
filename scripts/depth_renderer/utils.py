@@ -4,25 +4,6 @@ import math
 from PIL import Image as im
 
 
-POINT_RADIUS = 0.03
-
-
-'''
-Rotation functions
-'''
-def rotx_q(a):
-    a = math.radians(a)
-    return np.array([math.cos(a/2), 0, math.sin(a/2), 0])
-
-def roty_q(a):
-    a = math.radians(a)
-    return np.array([math.cos(a/2), math.sin(a/2), 0, 0])
-
-def rotz_q(a):
-    a = math.radians(a)
-    return np.array([math.cos(a/2), 0, 0, math.sin(a/2)])
-
-
 '''
 Save the depth image
 Normalize the depth so that is visible
@@ -43,7 +24,7 @@ def save_depth_image(depth_data, file_name):
     data.save(file_name)
 
 
-def compute_depth_mc(points, rot=rotx_q(0), trans=np.array([0,0,0]), show_canvas=False):
+def compute_depth_mc(points, rot, trans, show_canvas=False):
 
     import trimesh
     from tqdm import tqdm
@@ -51,8 +32,11 @@ def compute_depth_mc(points, rot=rotx_q(0), trans=np.array([0,0,0]), show_canvas
     from skimage import measure
 
 
-    radius = 0.03  # point radius
-    dx = 0.008  # marching cube grid size
+    # radius = 0.03  # point radius
+    # dx = 0.008  # marching cube grid size
+
+    radius = 0.01  # point radius
+    dx = 0.016  # marching cube grid size
 
     bbox = np.array([points.min(0) - radius * 1.1, points.max(0) + radius * 1.1])
 
@@ -79,7 +63,6 @@ def compute_depth_mc(points, rot=rotx_q(0), trans=np.array([0,0,0]), show_canvas
         dist = np.minimum(dist, d)
 
     dist -= radius
-
     
 
     verts, faces, normals, values = measure.marching_cubes(dist, 0)
@@ -103,8 +86,6 @@ def compute_depth_mc(points, rot=rotx_q(0), trans=np.array([0,0,0]), show_canvas
     mesh_node = scene.add(mesh)
 
 
-    # rot = rotz_q(90)
-    rot = rot / np.sqrt(np.sum(rot**2))
     mesh_node.translation = trans
     mesh_node.rotation = rot
 

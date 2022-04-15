@@ -89,6 +89,7 @@ def simulate_scene(data_i, params, data_name):
         state = env.get_state()
 
         # gird_m.append(env.simulator.grid_m.to_numpy())
+        # ppos.append(env.simulator.x.to_numpy()[0])
         # ppos.append(env.simulator.x.to_numpy())
         
         positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
@@ -104,6 +105,9 @@ def simulate_scene(data_i, params, data_name):
 
     state = env.get_state()
 
+    # ppos1.append(env.simulator.x.to_numpy()[0])
+    # ppos.append(env.simulator.x.to_numpy())
+
     positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
 
     sts = np.array(state['state'][4:])
@@ -118,19 +122,22 @@ def simulate_scene(data_i, params, data_name):
             'scene_info': d['scene_info']
             }
 
-    # with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
-    #         np.save(f, states)
+    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
+            np.save(f, states)
 
     # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
     #         np.save(f, np.array(gird_m))
-    with open(os.path.join(out_dir, 'ppos_' + data_name + '.npy'), 'wb') as f:
-            np.save(f, np.array(ppos))
+
+    # ppos = env.simulator.x.to_numpy()
+    # print(ppos.shape)
+    # with open(os.path.join(out_dir, 'RiceGrip-ppos.npy'), 'wb') as f:
+    #         np.save(f, np.array(ppos))
 
     if args.video:
         animate(images, os.path.join(out_dir, data_name + '.webm'))
 
 
-for data_i in range(1):
+for data_i in range(100):
     # YS = 5 + np.random.random()*195
     # E = 100 + np.random.random()*2900
     # nu = 0 + np.random.random()*0.45
@@ -142,16 +149,22 @@ for data_i in range(1):
     N_GRID = 5
     params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
     params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-    YS = params_range[0][0] + params_offset[0] * 3
+    # YS = params_range[0][0] + params_offset[0] * 3
+    # E = params_range[1][0] + params_offset[1] * 1
+    # nu = params_range[2][0] + params_offset[2] * 3
+
+    # For finetuning
+    YS = params_range[0][0] + params_offset[0] * 4
     E = params_range[1][0] + params_offset[1] * 1
-    nu = params_range[2][0] + params_offset[2] * 3
+    nu = params_range[2][0] + params_offset[2] * 4
+
 
     params = []
     params.append(YS)
     params.append(E)
     params.append(nu)
     print(params)
-    data_name = f'{data_i:04d}'
+    data_name = f'{data_i+4000:05d}'
     simulate_scene(data_i, params, data_name)
 
 
