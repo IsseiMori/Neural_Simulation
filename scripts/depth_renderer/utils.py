@@ -36,7 +36,7 @@ def compute_depth_mc(points, rot, trans, show_canvas=False):
     # dx = 0.008  # marching cube grid size
 
     radius = 0.01  # point radius
-    dx = 0.016  # marching cube grid size
+    dx = 0.010  # marching cube grid size
 
     bbox = np.array([points.min(0) - radius * 1.1, points.max(0) + radius * 1.1])
 

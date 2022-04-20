@@ -5,7 +5,6 @@ import numpy as np
 import glob
 import re
 
-from utils_simulator import *
 from utils import *
 
 from scipy.spatial.transform import Rotation
@@ -40,9 +39,13 @@ for file in files[:min(len(files), args.n)]:
 
         depths = []
 
-        d = np.load(file, allow_pickle=True).item()
+        # ['states'] type data
+        # d = np.load(file, allow_pickle=True).item()
+        # positions = d['positions'][0]
 
-        positions = d['positions'][0]
+        # numpy type data
+        d = np.load(file, allow_pickle=True)
+        positions = d
 
         for i_frame in range(0, len(positions)):
 

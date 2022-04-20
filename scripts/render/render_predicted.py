@@ -96,7 +96,7 @@ def update(event):
 # start animation
 timer = app.Timer()
 timer.connect(update)
-timer.start(interval=1. / 30., iterations=seq_length*2*len(data))
+timer.start(interval=1. / 3., iterations=seq_length*2*len(data))
 
 #c.show()
 app.run()

@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from glpointrast import perspective, PointRasterizer
+import json
 
 import math
 
@@ -20,12 +21,16 @@ def save_depth_image(depth_data, file_name):
     data.save(file_name)
 
 
+with open("/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/MPM/views.json", 'r') as f:
+    views = json.load(f)
 
+view = views[2]
 
-rot = Rotation.from_euler('xyz', [90, 0, 0], degrees=True).as_matrix()
+rot = Rotation.from_euler('xyz', view['rotation'], degrees=True).as_matrix()
 mv_mat = np.zeros((4,4))
 mv_mat[:3, :3] = rot
-mv_mat[:, 3] = np.array([0, 0, -0.7, 1])
+mv_mat[:3, 3] = np.array(view['translation'])
+mv_mat[3, 3] = 1
 print(mv_mat)
 
 
@@ -33,7 +38,7 @@ proj = perspective(np.pi / 3, 1, 0.1, 10)
 raster_func = PointRasterizer(128, 128, 0.01, mv_mat, proj)
 
 # points_true = np.load('points_true.npy')
-points_true = np.load('/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/MPM/raw2/04000.npy', allow_pickle=True).item()['positions'][0, 20, :, :3]
+points_true = np.load('/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandom/MPM/raw/04000.npy', allow_pickle=True).item()['positions'][0, 20, :, :3]
 points_true = points_true.astype(np.float32)
 points_true[:, 0] -= 0.5
 points_true[:, 1] -= 0.1
