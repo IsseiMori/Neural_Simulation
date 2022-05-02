@@ -12,6 +12,7 @@ parser.add_argument("--scene", help="data type", required=True, type=str)
 parser.add_argument("--out", help="output dir", required=True, type=str)
 parser.add_argument("--flex", help="flex data path", required=True, type=str)
 parser.add_argument("--video", help="write video", action='store_true')
+parser.add_argument("--data", help="write video", required=True, type=str)
 args = parser.parse_args()
 
 out_dir = args.out
@@ -42,6 +43,8 @@ def set_parameters(env: TaichiEnv, yield_stress, E, nu):
 
 
 def simulate_scene(data_i, params, data_name):
+
+
     
     env.initialize()
 
@@ -53,7 +56,8 @@ def simulate_scene(data_i, params, data_name):
     gripper_config = sample_gripper_config("BendTube", random=False)
 
     # d = np.load(os.path.join(args.flex, data_name + ".npy"), allow_pickle=True).item()
-    d = np.load(os.path.join(args.flex, "0000.npy"), allow_pickle=True).item()
+    d = np.load(os.path.join(args.flex, args.data + ".npy"), allow_pickle=True).item()
+    # d = np.load(os.path.join(args.flex, "0000.npy"), allow_pickle=True).item()
     
     # x, v, F, C, p1, p2, p3 = state['state']
     states_xvfcp = state['state']
@@ -92,7 +96,7 @@ def simulate_scene(data_i, params, data_name):
         env.simulator.compute_grid_m_kernel(0)
         gird_m.append(env.simulator.grid_m.to_numpy())
 
-        ppos.append(env.simulator.x.to_numpy()[0])
+        # ppos.append(env.simulator.x.to_numpy()[0])
         # ppos.append(env.simulator.x.to_numpy())
         
         positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
@@ -106,13 +110,15 @@ def simulate_scene(data_i, params, data_name):
         if args.video:
             images.append(env.render('rgb_array'))
 
+        ppos.append(env.simulator.x.to_numpy()[0])
+
     state = env.get_state()
 
     env.simulator.compute_grid_m_kernel(0)
     gird_m.append(env.simulator.grid_m.to_numpy())
 
     # ppos1.append(env.simulator.x.to_numpy()[0])
-    ppos.append(env.simulator.x.to_numpy())
+    # ppos.append(env.simulator.x.to_numpy())
 
     positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
 
@@ -128,19 +134,19 @@ def simulate_scene(data_i, params, data_name):
             'scene_info': d['scene_info']
             }
 
-    # with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
-    #         np.save(f, states)
+    with open(os.path.join(out_dir, args.scene + '-action-' + args.data + '.npy'), 'wb') as f:
+            np.save(f, states)
 
-    with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
-            np.save(f, np.array(gird_m))
+    # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
+    #         np.save(f, np.array(gird_m))
 
     # ppos = env.simulator.x.to_numpy()
     # print(ppos.shape)
-    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
+    with open(os.path.join(out_dir, args.scene + '-ppos-' + args.data + '.npy'), 'wb') as f:
             np.save(f, np.array(ppos))
 
     if args.video:
-        animate(images, os.path.join(out_dir, data_name + '.webm'))
+        animate(images, os.path.join(out_dir, args.scene + '-' + args.data + '.webm'))
 
 
 for data_i in range(1):

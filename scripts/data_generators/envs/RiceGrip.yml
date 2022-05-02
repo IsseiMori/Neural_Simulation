@@ -11,7 +11,7 @@ SHAPES:
     color: ((((200 << 8) + 200) << 8) + 0)
 PRIMITIVES:
   - shape: Box
-    size: (0.03, 0.16, 0.03)
+    size: (0.04, 0.16, 0.04)
     init_pos: (0.2, 0.2, 0.2)
     init_rot: (0., 0., 0., 1.)
     lower_bound: (0., 0., 0.)
