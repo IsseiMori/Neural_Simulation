@@ -1,0 +1,18 @@
+--find-links https://download.pytorch.org/whl/cu102/torch_stable.html
+torch==1.10.1+cu102
+torchvision==0.11.2+cu102
+torchaudio===0.10.1+cu102
+
+--find-links https://data.pyg.org/whl/torch-1.10.0+cu102.html
+torch-scatter
+torch-sparse
+torch-cluster
+torch-spline-conv
+torch-geometric
+
+notebook
+tensorboard
+tensorflow-datasets
+tensorflow-gpu
+dm-tree
+tfrecord
