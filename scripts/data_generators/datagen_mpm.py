@@ -10,13 +10,16 @@ from utils import *
 parser = argparse.ArgumentParser()
 parser.add_argument("--scene", help="data type", required=True, type=str)
 parser.add_argument("--out", help="output dir", required=True, type=str)
-parser.add_argument("--flex", help="flex data path", required=True, type=str)
+parser.add_argument("--n", help="number of data", required=False, type=int, default=1)
 parser.add_argument("--video", help="write video", action='store_true')
-parser.add_argument("--data", help="write video", required=True, type=str)
+parser.add_argument("--offset", help="number of data offset", required=False, type=int, default=0)
 args = parser.parse_args()
 
 out_dir = args.out
 os.system('mkdir -p ' + out_dir)
+
+dt = 1. / 60.
+dim_shape_state = 14
 
 
 cfg = load(f"envs/" + args.scene + ".yml") # you can find most default config is at plb/config/default_config.py
@@ -44,30 +47,29 @@ def set_parameters(env: TaichiEnv, yield_stress, E, nu):
 
 def simulate_scene(data_i, params, data_name):
 
+    np.random.seed(data_i) 
 
-    
     env.initialize()
+
+    scene_info = init_scene_plb(env, args.scene)
 
     set_parameters(env, params[0], params[1], params[2])
 
     state = env.get_state()
 
+    gripper_config = sample_gripper_config(args.scene, random=True)
+    shape_states_ = calc_shape_states(0 * dt, gripper_config, dim_shape_state, dt, args.scene)
 
-    gripper_config = sample_gripper_config("BendTube", random=False)
-
-    # d = np.load(os.path.join(args.flex, data_name + ".npy"), allow_pickle=True).item()
-    d = np.load(os.path.join(args.flex, args.data + ".npy"), allow_pickle=True).item()
-    # d = np.load(os.path.join(args.flex, "0000.npy"), allow_pickle=True).item()
-    
-    # x, v, F, C, p1, p2, p3 = state['state']
     states_xvfcp = state['state']
-    n_grips = d['shape_states'].shape[2]
-    n_frames = d['shape_states'].shape[1]
+    n_frames = 40
 
-    shape_states_ = d['shape_states'][0][0]
+    states_xvfcp[0] = np.random.random_sample((5000, 3)) * 0.2 + np.array([0.4, 0.0, 0.4])
     
-    for i_grip in range(n_grips):
+    for i_grip in range(len(shape_states_)):
         states_xvfcp[4+i_grip][:3] = shape_states_[i_grip][0:3]
+        states_xvfcp[4+i_grip][:3] /= 5
+        states_xvfcp[4+i_grip][0] += 0.5
+        states_xvfcp[4+i_grip][2] += 0.5
         states_xvfcp[4+i_grip][3:] = shape_states_[i_grip][6:10]
 
 
@@ -82,19 +84,19 @@ def simulate_scene(data_i, params, data_name):
     positions = []
     shape_states = []
 
-
     images = []
     states = []
     gird_m = []
     ppos = []
 
-    for frame in range(n_frames-1):
+
+    for frame in range(1, n_frames):
         print(f'{frame}', end="\r",)
 
         state = env.get_state()
 
-        env.simulator.compute_grid_m_kernel(0)
-        gird_m.append(env.simulator.grid_m.to_numpy())
+        # env.simulator.compute_grid_m_kernel(0)
+        # gird_m.append(env.simulator.grid_m.to_numpy())
 
         # ppos.append(env.simulator.x.to_numpy()[0])
         # ppos.append(env.simulator.x.to_numpy())
@@ -102,10 +104,20 @@ def simulate_scene(data_i, params, data_name):
         positions.append(np.concatenate((state['state'][0], np.ones([len(state['state'][0]), 1])), 1))
         sts = np.array(state['state'][4:])
         shape_states.append(np.concatenate([sts[:, :3], sts[:, :3], sts[:, 3:], sts[:, 3:]], axis=1))
-        
 
-        # env.step(calc_shape_states_dx(frame * dt, gripper_config))
-        env.step((d['shape_states'][0][frame+1][:, 0:3] - d['shape_states'][0][frame][:, 0:3]).flatten() * 100)
+        shape_states_ = calc_shape_states(frame * dt, gripper_config, dim_shape_state, dt, args.scene)
+
+        action_after = shape_states_[:, 0:3]
+        action_before = shape_states_[:, 3:6]
+        action_before /= 5
+        action_after /= 5
+        action_before[0] += 0.5
+        action_before[1] += 0.5
+        action_after[0] += 0.5
+        action_after[1] += 0.5
+        action = action_after - action_before
+
+        env.step((action).flatten() * 100)
 
         if args.video:
             images.append(env.render('rgb_array'))
@@ -114,8 +126,8 @@ def simulate_scene(data_i, params, data_name):
 
     state = env.get_state()
 
-    env.simulator.compute_grid_m_kernel(0)
-    gird_m.append(env.simulator.grid_m.to_numpy())
+    # env.simulator.compute_grid_m_kernel(0)
+    # gird_m.append(env.simulator.grid_m.to_numpy())
 
     # ppos1.append(env.simulator.x.to_numpy()[0])
     # ppos.append(env.simulator.x.to_numpy())
@@ -131,10 +143,10 @@ def simulate_scene(data_i, params, data_name):
             'YS': params[0], 
             'E': params[1], 
             'nu': params[2],
-            'scene_info': d['scene_info']
+            'scene_info': scene_info
             }
 
-    with open(os.path.join(out_dir, args.scene + '-action-' + args.data + '.npy'), 'wb') as f:
+    with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
             np.save(f, states)
 
     # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
@@ -142,17 +154,17 @@ def simulate_scene(data_i, params, data_name):
 
     # ppos = env.simulator.x.to_numpy()
     # print(ppos.shape)
-    with open(os.path.join(out_dir, args.scene + '-ppos-' + args.data + '.npy'), 'wb') as f:
-            np.save(f, np.array(ppos))
+    # with open(os.path.join(out_dir, args.scene + '-ppos-' + args.data + '.npy'), 'wb') as f:
+    #         np.save(f, np.array(ppos))
 
     if args.video:
-        animate(images, os.path.join(out_dir, args.scene + '-' + args.data + '.webm'))
+        animate(images, os.path.join(out_dir, data_name + '.webm'))
 
 
-for data_i in range(1):
-    # YS = 5 + np.random.random()*195
-    # E = 100 + np.random.random()*2900
-    # nu = 0 + np.random.random()*0.45
+for data_i in range(args.offset, args.n):
+    YS = 5 + np.random.random()*195
+    E = 100 + np.random.random()*2900
+    nu = 0 + np.random.random()*0.45
 
     # YS = 5
     # E = 100 + np.random.random()*2900
@@ -166,16 +178,16 @@ for data_i in range(1):
     # nu = params_range[2][0] + params_offset[2] * 3
 
     # For finetuning
-    YS = params_range[0][0] + params_offset[0] * 4
-    E = params_range[1][0] + params_offset[1] * 1
-    nu = params_range[2][0] + params_offset[2] * 4
+    # YS = params_range[0][0] + params_offset[0] * 4
+    # E = params_range[1][0] + params_offset[1] * 1
+    # nu = params_range[2][0] + params_offset[2] * 4
 
 
     params = []
     params.append(YS)
     params.append(E)
     params.append(nu)
-    print(params)
+    print(data_i, params)
     data_name = f'{data_i:05d}'
     simulate_scene(data_i, params, data_name)
 

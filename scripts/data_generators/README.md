@@ -44,3 +44,9 @@ python test_FluidFall.py
 python datagen_flex.py --scene=RiceGrip --out="raw" --fixed_grip --video
 
 ```
+
+# Create MPM dataset
+```
+python datagen_mpm.py --scene=RiceGripMulti --out="raw" --video
+
+```

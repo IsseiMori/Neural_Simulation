@@ -369,8 +369,6 @@ def init_scene(pyflex, data_type, clusterStiffness, clusterPlasticThreshold, clu
         halfEdge1 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
         halfEdge2 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
 
-
-        halfEdge = np.array([0.15, 0.8, 0.15])
         center = np.array([0., 0., 0.])
         quat = np.array([1., 0., 0., 0.])
 
@@ -438,3 +436,26 @@ def init_scene(pyflex, data_type, clusterStiffness, clusterPlasticThreshold, clu
     else:
 
         sys.exit('Invalid scene type')
+
+
+def init_scene_plb(env, data_type):
+
+    if data_type == "RiceGripMulti":
+
+        x = rand_float(8.0, 10.0)
+        y = rand_float(8.0, 10.0)
+        z = rand_float(8.0, 10.0)
+
+        halfEdge1 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
+        halfEdge2 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
+
+        center = np.array([0., 0., 0.])
+        quat = np.array([1., 0., 0., 0.])
+
+        halfEdge1 /= 5
+        halfEdge2 /= 5
+
+        env.primitives.primitives[0].size[None] = tuple(halfEdge1.tolist())
+        env.primitives.primitives[1].size[None] = tuple(halfEdge2.tolist())
+
+        return np.stack((halfEdge1, halfEdge2))

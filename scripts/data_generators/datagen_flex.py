@@ -54,16 +54,7 @@ use_gpu = torch.cuda.is_available()
 
 def simulate_scene(data_i, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep, data_name):
 
-    # clusterStiffness = rand_float(0.3, 0.7)
-    # clusterPlasticThreshold = rand_float(0.00001, 0.0005)
-    # clusterPlasticCreep = rand_float(0.1, 0.3)
-
-    # # clusterStiffness = 0.3
-    # # clusterPlasticThreshold = 0.00001
-    # # clusterPlasticCreep = 0.3
-    # clusterStiffness = 0.7
-    # clusterPlasticThreshold = 0.0005
-    # clusterPlasticCreep = 0.1
+    np.random.seed(data_i) 
 
     scene_info = init_scene(pyflex, args.scene, clusterStiffness, clusterPlasticThreshold, clusterPlasticCreep)
 

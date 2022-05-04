@@ -23,6 +23,7 @@ parser.add_argument("--out", help="out dir", required=True, type=str)
 parser.add_argument("--flex", help="Is this flex data?", action='store_true')
 parser.add_argument("--mpm", help="Is this mpm data?", action='store_true')
 parser.add_argument("--restpos", help="include respos?", action='store_true')
+parser.add_argument("--reduced", help="reduced number of particles", required=False, default=-1, type=int)
 
 parser.add_argument("--num_data", help="number of data to include", required=False, default=100, type=int)
 parser.add_argument("--offset", help="data load offset", required=False, default=0, type=int)
@@ -167,9 +168,10 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
 
 
         # Random sample to match MPM with FLEX
-        # num_particles = 1060
-        # random_indices = np.random.randint(d['positions'].shape[2], size=num_particles)
-        # d['positions'] = d['positions'][:,:,random_indices]
+        if args.reduced > 0:
+            assert args.reduced <= d['positions'].shape[2]
+            random_indices = np.random.randint(d['positions'].shape[2], size=args.reduced)
+            d['positions'] = d['positions'][:,:,random_indices]
 
         # If MPM and --restpos, need to extend position to 6 dim
         # If FLEX and not --restpos, remove restpos

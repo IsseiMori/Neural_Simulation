@@ -114,7 +114,7 @@ def main():
             vel_mean += np.mean(prev_vel, axis=0)
             acc_mean += np.mean(curr_acc, axis=0)
 
-            vels.append(prev_vel)
+            # vels.append(prev_vel)
             
             total_frames += 1
         
@@ -136,7 +136,6 @@ def main():
         contexts0 = np.vstack(contexts0)
         contexts1 = np.vstack(contexts1)
         contexts2 = np.vstack(contexts2)
-
 
 
     # vel_var = np.zeros_like(loaded_positions[0]).astype(np.float64)
@@ -185,6 +184,10 @@ def main():
     acc_std = np.sqrt(acc_var / total_particles)
     vel_mean_final = vel_mean
     acc_mean_final = acc_mean
+
+    # print()
+    # print(np.array(vels).reshape(-1, 3).std(axis=0))
+    # print(vel_std)
 
 
 
