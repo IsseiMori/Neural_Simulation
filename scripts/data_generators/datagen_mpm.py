@@ -12,6 +12,7 @@ parser.add_argument("--scene", help="data type", required=True, type=str)
 parser.add_argument("--out", help="output dir", required=True, type=str)
 parser.add_argument("--n", help="number of data", required=False, type=int, default=1)
 parser.add_argument("--video", help="write video", action='store_true')
+parser.add_argument("--ppos", help="export x positions", action='store_true')
 parser.add_argument("--offset", help="number of data offset", required=False, type=int, default=0)
 args = parser.parse_args()
 
@@ -146,50 +147,78 @@ def simulate_scene(data_i, params, data_name):
             'scene_info': scene_info
             }
 
+    if args.ppos:
+       states['x'] = np.array(ppos)
+
     with open(os.path.join(out_dir, data_name + '.npy'), 'wb') as f:
             np.save(f, states)
 
     # with open(os.path.join(out_dir, 'gridm_' + data_name + '.npy'), 'wb') as f:
     #         np.save(f, np.array(gird_m))
 
-    # ppos = env.simulator.x.to_numpy()
-    # print(ppos.shape)
-    # with open(os.path.join(out_dir, args.scene + '-ppos-' + args.data + '.npy'), 'wb') as f:
-    #         np.save(f, np.array(ppos))
-
     if args.video:
         animate(images, os.path.join(out_dir, data_name + '.webm'))
 
 
-for data_i in range(args.offset, args.n):
-    YS = 5 + np.random.random()*195
-    E = 100 + np.random.random()*2900
-    nu = 0 + np.random.random()*0.45
+# for data_i in range(args.offset, args.offset + args.n):
+#     # YS = 5 + np.random.random()*195
+#     # E = 100 + np.random.random()*2900
+#     # nu = 0 + np.random.random()*0.45
 
-    # YS = 5
-    # E = 100 + np.random.random()*2900
-    # nu = 0
+#     # YS = 5
+#     # E = 100 + np.random.random()*2900
+#     # nu = 0
 
-    N_GRID = 5
-    params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
-    params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
-    # YS = params_range[0][0] + params_offset[0] * 3
-    # E = params_range[1][0] + params_offset[1] * 1
-    # nu = params_range[2][0] + params_offset[2] * 3
+#     N_GRID = 5
+#     params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
+#     params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+#     # YS = params_range[0][0] + params_offset[0] * 3
+#     # E = params_range[1][0] + params_offset[1] * 1
+#     # nu = params_range[2][0] + params_offset[2] * 3
 
-    # For finetuning
-    # YS = params_range[0][0] + params_offset[0] * 4
-    # E = params_range[1][0] + params_offset[1] * 1
-    # nu = params_range[2][0] + params_offset[2] * 4
+#     # For finetuning
+#     # YS = params_range[0][0] + params_offset[0] * 4
+#     # E = params_range[1][0] + params_offset[1] * 1
+#     # nu = params_range[2][0] + params_offset[2] * 4
+
+#     # For finetuning
+#     YS = params_range[0][0] + params_offset[0] * 1
+#     E = params_range[1][0] + params_offset[1] * 4
+#     nu = params_range[2][0] + params_offset[2] * 4
 
 
-    params = []
-    params.append(YS)
-    params.append(E)
-    params.append(nu)
-    print(data_i, params)
-    data_name = f'{data_i:05d}'
-    simulate_scene(data_i, params, data_name)
+#     params = []
+#     params.append(YS)
+#     params.append(E)
+#     params.append(nu)
+#     print(data_i, params)
+#     data_name = f'{data_i:05d}'
+#     simulate_scene(data_i, params, data_name)
+
+
+benchmark_list = [4012, 4010, 4019, 4022, 4026, 4032, 4024, 4007, 4004, 4003]
+materials_list = [[0.5, 4, 2], [0.5, 0.5, 2], [4, 4, 2], [4, 0.5, 2], [4.5, 0.5, 0.1], [4.5, 0.5, 4]]
+d_i = 0
+for data_i in benchmark_list:
+    for mat_i in materials_list:
+
+        N_GRID = 5
+        params_range = np.array([[5, 200], [100, 3000], [0, 0.45]])
+        params_offset = (params_range[:, 1] - params_range[:, 0]) / (N_GRID - 1)
+
+        YS = params_range[0][0] + params_offset[0] * mat_i[0]
+        E = params_range[1][0] + params_offset[1] * mat_i[1]
+        nu = params_range[2][0] + params_offset[2] * mat_i[2]
+
+
+        params = []
+        params.append(YS)
+        params.append(E)
+        params.append(nu)
+        print(data_i, params)
+        data_name = f'{d_i:05d}'
+        simulate_scene(data_i, params, data_name)
+        d_i += 1
 
 
 

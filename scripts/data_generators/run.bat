@@ -80,3 +80,13 @@ rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGr
 rem --flex=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandomFull/FLEX/raw \
 rem --data=00004 \
 rem --video
+
+
+
+python datagen_mpm.py \
+--scene=RiceGripMulti \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/sysid/raw \
+--offset=4000 \
+--n=20 \
+--video \
+--ppos

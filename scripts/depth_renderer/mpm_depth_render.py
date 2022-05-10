@@ -29,7 +29,6 @@ for view in views:
 files = glob.glob(args.data)
 files.sort(key = lambda f: int(re.sub('\\D', '', f)))
 
-
 for file in files[:min(len(files), args.n)]:
 
     for view in views:
@@ -40,12 +39,13 @@ for file in files[:min(len(files), args.n)]:
         depths = []
 
         # ['states'] type data
-        # d = np.load(file, allow_pickle=True).item()
-        # positions = d['positions'][0]
+        d = np.load(file, allow_pickle=True).item()
+        positions = d['x']
+        print(positions.shape)
 
         # numpy type data
-        d = np.load(file, allow_pickle=True)
-        positions = d
+        # d = np.load(file, allow_pickle=True)
+        # positions = d
 
         for i_frame in range(0, len(positions)):
 
