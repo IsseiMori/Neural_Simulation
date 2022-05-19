@@ -197,7 +197,7 @@ def simulate_scene(data_i, params, data_name):
 
 
 benchmark_list = [4012, 4010, 4019, 4022, 4026, 4032, 4024, 4007, 4004, 4003]
-materials_list = [[0.5, 4, 2], [0.5, 0.5, 2], [4, 4, 2], [4, 0.5, 2], [4.5, 0.5, 0.1], [4.5, 0.5, 4]]
+materials_list = [[0.5, 3.5, 0.1], [0.5, 0.5, 0.1], [3.5, 3.5, 0.1], [3.5, 0.5, 0.1], [3.5, 0.5, 3.5]]
 d_i = 0
 for data_i in benchmark_list:
     for mat_i in materials_list:
