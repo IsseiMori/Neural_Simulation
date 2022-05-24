@@ -10,9 +10,10 @@ torch-cluster
 torch-spline-conv
 torch-geometric
 
+keras==2.8.0
 notebook
-tensorboard
+tensorboard==2.8.0
 tensorflow-datasets
-tensorflow-gpu
+tensorflow==2.8.0
 dm-tree
 tfrecord
