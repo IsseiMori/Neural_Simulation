@@ -153,5 +153,6 @@ def split_trajectory(context, features, window_length=7):
     for idx in range(input_trajectory_length):
       extra_stack.append(features['extra_features'][idx:idx + window_length])
     model_input_features['extra_features'] = tf.stack(extra_stack)
+    
 
   return tf.data.Dataset.from_tensor_slices(model_input_features)
