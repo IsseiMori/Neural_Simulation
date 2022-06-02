@@ -84,3 +84,20 @@ python create_tfrecord.py --data=/home/issei/Documents/UCSD/SuLab/Neural_Simulat
 python create_tfrecord.py --data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/raw --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/reduced/data --mpm --num_data=500 --offset=4000 --name=test --reduced=1060
 python create_tfrecord.py --data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/raw --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/reduced/data/rollouts --mpm --num_data=10 --offset=0 --name=train --reduced=1060
 python create_tfrecord.py --data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/raw --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/MPM/reduced/data/rollouts --mpm --num_data=10 --offset=4000 --name=test --reduced=1060
+
+
+
+python create_tfrecord_multi.py \
+--data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/data/rollouts \
+--num_data=2 --offset=0 --name=train
+
+python create_tfrecord_multi.py \
+--data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/data/rollouts \
+--num_data=2 --offset=100 --name=test
+
+python create_metadata_multi.py \
+--data=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/data \
+--mpm --num_data=100

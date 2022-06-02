@@ -27,7 +27,7 @@ def quatFromAxisAngle(axis, angle):
     return quat
 
 
-def sample_gripper_config(data_type="RiceGrip", random=True):
+def sample_gripper_config(data_type="RiceGrip", random=True, scene_info=None):
 
     if random:
         dis = np.random.rand() * 0.5
@@ -47,15 +47,19 @@ def sample_gripper_config(data_type="RiceGrip", random=True):
 
     elif data_type == "RiceGripMulti":
 
+        width1 = 1.0 - (max(scene_info[0][0], scene_info[0][2]) - 0.1) / 0.25
+        width2 = 1.0 - (max(scene_info[1][0], scene_info[1][2]) - 0.1) / 0.25
+        width_max = max(width1, width2)
+
         x = np.cos(angle) * dis
         y1 = 0.8 + max(0, 0.8 * np.random.rand() - 0.2) # horizontal press 1
         y2 = 0.8 + max(0, 0.8 * np.random.rand() - 0.2) # horizontal press 2
         z = np.sin(angle) * dis
-        d = d_rand * 0.1 + 0.8    # (0.6, 0.8)
+        d = d_rand * 0.1 + 0.8 - width_max * 0.10   # (0.6, 0.8)
         d0 = d_rand * 0.4 + 0.4    # (0.6, 0.8)
         d1 = d_rand * 0.2 + 0.05 # vertical press 1
         d2 = d_rand * 0.2 + 0.05 # vertical press 2
-        c = True if np.random.rand() < 0.65 else False
+        c = True if np.random.rand() < 0.5 else False
         return x, z, d, y1, y2, d0, d1, d2, c
 
     elif data_type == "PressDown":
@@ -446,8 +450,14 @@ def init_scene_plb(env, data_type):
         y = rand_float(8.0, 10.0)
         z = rand_float(8.0, 10.0)
 
-        halfEdge1 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
-        halfEdge2 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
+        # halfEdge1 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
+        # halfEdge2 = np.array([0.05 + 0.3 * np.random.rand(), 0.8, 0.05 + 0.3 * np.random.rand()])
+
+        halfEdge1 = np.array([0.15 + 0.20 * np.random.rand(), 0.8, 0.15 + 0.20 * np.random.rand()])
+        halfEdge2 = np.array([0.15 + 0.20 * np.random.rand(), 0.8, 0.15 + 0.20 * np.random.rand()])
+
+        # halfEdge1 = np.array([0.1 + 0.05, 0.8, 0.1 + 0.25])
+        # halfEdge2 = np.array([0.1 + 0.05, 0.8, 0.1 + 0.25])
 
         center = np.array([0., 0., 0.])
         quat = np.array([1., 0., 0., 0.])

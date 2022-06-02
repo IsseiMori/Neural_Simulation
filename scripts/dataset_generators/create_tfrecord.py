@@ -228,7 +228,7 @@ def generate_tfrecord_plb(data_name, writer_name, idx_start, idx_end, _HAS_CONTE
             step_context_feature_list = tf.train.FeatureList(feature=step_context_bytes_list)
 
         particle_type = np.ones([positions[0].shape[0]], dtype=np.int64)
-        particle_type[n_particle_plasticine:] += 2
+        particle_type[n_particle_plasticine:] = 0
         particle_type = particle_type.tobytes()
         particle_type_feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[particle_type]))
 

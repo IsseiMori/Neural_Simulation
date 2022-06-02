@@ -90,3 +90,14 @@ python datagen_mpm.py \
 --n=20 \
 --video \
 --ppos
+
+python datagen_mpm_multi.py \
+--scene=RiceGripMulti \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+--n=120 \
+--video
+
+python datagen_mpm_multi.py \
+--scene=RiceGripMulti \
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+--n=120
