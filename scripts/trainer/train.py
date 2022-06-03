@@ -23,6 +23,7 @@ parser.add_argument("--rollout_steps", help="rollout_steps", required=False, typ
 parser.add_argument("--num_rollouts", help="number of rollouts", required=False, type=int, default=10)
 parser.add_argument("--num_steps", help="num_steps", required=False, type=int, default=10000000)
 parser.add_argument("--dim", help="dimension of the positions", required=False, type=int, default=3)
+parser.add_argument("--batch", help="batch size", required=False, type=int, default=1)
 parser.add_argument("--force_rollout", help="force eval and rollout in the first step", action='store_true')
 
 args = parser.parse_args()
@@ -31,7 +32,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 
 INPUT_SEQUENCE_LENGTH = 6
 device = 'cuda'
-batch_size = 1
+batch_size = args.batch
 noise_std = 6.7e-4
 training_steps = args.num_steps # int(3e6)
 log_steps = 5
@@ -613,7 +614,7 @@ def train(simulator):
     is_first_step = True
     
     # if model_path is not None:
-    files = glob.glob(os.path.join(model_path, 'model_*.pth'))
+    files = glob.glob(os.path.join(model_path, 'model.pth'))
     files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
     if len(files) > 0:
     # if os.path.exists(os.path.join(model_path, 'model_*.pth')):
@@ -655,7 +656,13 @@ def train(simulator):
                     'epoch': step,
                     'model_state_dict': simulator.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict()
-                }, os.path.join(model_path, 'model_' + str(step) + '.pth'))
+                }, os.path.join(model_path, 'model_backup.pth'))
+
+                torch.save({
+                    'epoch': step,
+                    'model_state_dict': simulator.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict()
+                }, os.path.join(model_path, 'model.pth'))
 
             if step % eval_steps == 0 or (args.force_rollout and is_first_step):
                 eval_loss = eval_one_step(ds_eval, simulator, device, noise_std)

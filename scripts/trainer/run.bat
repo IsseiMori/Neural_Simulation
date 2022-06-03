@@ -11,3 +11,6 @@ python inference.py \
     --model=../../tmp/Finetune/RiceGrip/FLEX/partial/models/model_370000.pth \
     --output_path=../../tmp/Finetune/RiceGrip/FLEX/partial/grid  \
     --dim=6
+
+
+scp -r ../../../tmp/groop/data imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop
