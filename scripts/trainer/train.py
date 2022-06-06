@@ -311,7 +311,7 @@ class Simulator(nn.Module):
         most_recent_position = position_sequence[:, -1] # (n_nodes, 2)
         velocity_sequence = time_diff(position_sequence)
         # senders and receivers are integers of shape (E,)
-        senders, receivers = self._compute_connectivity(most_recent_position, n_particles_per_example, self._connectivity_radius, False)
+        senders, receivers = self._compute_connectivity(most_recent_position, n_particles_per_example, self._connectivity_radius)
         node_features = []
         # Normalized velocity sequence, merging spatial an time axis.
         velocity_stats = self._normalization_stats["velocity"]
@@ -362,10 +362,14 @@ class Simulator(nn.Module):
     def _compute_connectivity(self, node_features, n_particles_per_example, radius, add_self_edges=True):
         # handle batches. Default is 2 examples per batch
 
+        if args.energy_conservation:
+            add_self_edges = False
+
         # Specify examples id for particles/points
         batch_ids = torch.cat([torch.LongTensor([i for _ in range(n)]) for i, n in enumerate(n_particles_per_example)]).to(self._device)
         # radius = radius + 0.00001 # radius_graph takes r < radius not r <= radius
         edge_index = radius_graph(node_features, r=radius, batch=batch_ids, loop=add_self_edges) # (2, n_edges)
+
         receivers = edge_index[0, :]
         senders = edge_index[1, :]
 
