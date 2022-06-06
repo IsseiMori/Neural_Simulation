@@ -169,8 +169,11 @@ class InteractionNetwork(MessagePassing):
             receivers_directed = receivers[receivers > senders]
             senders_directed = senders[receivers > senders]
 
-            index_half = int(edge_index.shape[1] / 2)
-            e_features[index_half:] = e_features[:index_half]
+            if edge_index.shape[1] % 2 == 1:
+                print("Energy Conservation Failed")
+            else:
+                index_half = int(edge_index.shape[1] / 2)
+                e_features[index_half:] = e_features[:index_half]
 
         return e_features
 
@@ -699,16 +702,16 @@ def train(simulator):
                     'optimizer_state_dict': optimizer.state_dict()
                 }, os.path.join(model_path, 'model.pth'))
 
-            if step % eval_steps == 0 or (args.force_rollout and is_first_step):
-                eval_loss = eval_one_step(ds_eval, simulator, device, noise_std)
-                writer.add_scalar("eval_loss", eval_loss, step)
+            # if step % eval_steps == 0 or (args.force_rollout and is_first_step):
+            #     eval_loss = eval_one_step(ds_eval, simulator, device, noise_std)
+            #     writer.add_scalar("eval_loss", eval_loss, step)
 
-            if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
-                rollout_path = os.path.join(output_path, f'train_{step}')
-                os.makedirs(rollout_path, exist_ok=True)
+            # if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
+            #     rollout_path = os.path.join(output_path, f'train_{step}')
+            #     os.makedirs(rollout_path, exist_ok=True)
                 
-                ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
-                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
+            #     ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
+            #     eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
 
 
             if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
