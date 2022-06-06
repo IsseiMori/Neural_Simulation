@@ -46,12 +46,12 @@ rem python datagen_flex.py --scene=RiceGrip --out="/home/issei/Documents/UCSD/Su
 rem python datagen_mpm.py --video  --scene=RiceGrip --out="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGrip/MPM/full/mass" --flex="/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGrip/FLEX/full/raw"
 
 
-python datagen_mpm.py \
---scene=RiceGrip0 \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandomFull/MPM/raw \
---flex=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandomFull/FLEX/raw \
---data=00000 \
---video
+rem python datagen_mpm.py \
+rem --scene=RiceGrip0 \
+rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandomFull/MPM/raw \
+rem --flex=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/Finetune/RiceGripRandomFull/FLEX/raw \
+rem --data=00000 \
+rem --video
 
 rem python datagen_mpm.py \
 rem --scene=RiceGrip1 \
@@ -83,21 +83,28 @@ rem --video
 
 
 
-python datagen_mpm.py \
---scene=RiceGripMulti \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/sysid/raw \
---offset=4000 \
---n=20 \
---video \
---ppos
+rem python datagen_mpm.py \
+rem --scene=RiceGripMulti \
+rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/General/sysid/raw \
+rem --offset=4000 \
+rem --n=20 \
+rem --video \
+rem --ppos
+
+rem python datagen_mpm_multi.py \
+rem --scene=RiceGripMulti \
+rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
+rem --n=120 \
+rem --video
 
 python datagen_mpm_multi.py \
 --scene=RiceGripMulti \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
---n=120 \
---video
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Plastic/raw \
+--n=500 \
+--plastic
+
 
 python datagen_mpm_multi.py \
 --scene=RiceGripMulti \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/raw \
---n=120
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Elastic/raw \
+--n=500

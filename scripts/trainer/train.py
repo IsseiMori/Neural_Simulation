@@ -25,6 +25,7 @@ parser.add_argument("--num_steps", help="num_steps", required=False, type=int, d
 parser.add_argument("--dim", help="dimension of the positions", required=False, type=int, default=3)
 parser.add_argument("--batch", help="batch size", required=False, type=int, default=1)
 parser.add_argument("--force_rollout", help="force eval and rollout in the first step", action='store_true')
+parser.add_argument("--energy_conservation", help="energy_conservation", action='store_true')
 
 args = parser.parse_args()
 
@@ -159,6 +160,18 @@ class InteractionNetwork(MessagePassing):
     def message(self, edge_index, x_i, x_j, e_features):
         e_features = torch.cat([x_i, x_j, e_features], dim=-1)
         e_features = self.edge_fn(e_features)
+
+        if args.energy_conservation:
+
+            receivers = edge_index[0, :]
+            senders = edge_index[1, :]
+
+            receivers_directed = receivers[receivers > senders]
+            senders_directed = senders[receivers > senders]
+
+            index_half = int(edge_index.shape[1] / 2)
+            e_features[index_half:] = e_features[:index_half]
+
         return e_features
 
     def update(self, x_updated, x, e_features):
@@ -298,7 +311,7 @@ class Simulator(nn.Module):
         most_recent_position = position_sequence[:, -1] # (n_nodes, 2)
         velocity_sequence = time_diff(position_sequence)
         # senders and receivers are integers of shape (E,)
-        senders, receivers = self._compute_connectivity(most_recent_position, n_particles_per_example, self._connectivity_radius)
+        senders, receivers = self._compute_connectivity(most_recent_position, n_particles_per_example, self._connectivity_radius, False)
         node_features = []
         # Normalized velocity sequence, merging spatial an time axis.
         velocity_stats = self._normalization_stats["velocity"]
@@ -355,6 +368,24 @@ class Simulator(nn.Module):
         edge_index = radius_graph(node_features, r=radius, batch=batch_ids, loop=add_self_edges) # (2, n_edges)
         receivers = edge_index[0, :]
         senders = edge_index[1, :]
+
+        if args.energy_conservation:
+
+            receivers_directed = receivers[receivers > senders]
+            senders_directed = senders[receivers > senders]
+
+            receivers_directed_inv = receivers[receivers < senders]
+            senders_directed_inv = senders[receivers < senders]
+
+            values, indices = receivers_directed_inv.sort()
+            receivers_directed_inv = values
+            senders_directed_inv = senders_directed_inv[indices]
+
+            receivers_ordered = torch.cat([receivers_directed, receivers_directed_inv])
+            senders_ordered = torch.cat([senders_directed, senders_directed_inv])
+
+            return receivers_ordered, senders_ordered
+
         return receivers, senders
 
     def _decoder_postprocessor(self, normalized_acceleration, position_sequence):
