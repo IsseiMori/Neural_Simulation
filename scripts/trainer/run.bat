@@ -15,8 +15,11 @@ rem     --dim=6
 
 rem scp -r ../../tmp/groop/data imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop
 
-scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/models ../../tmp/groop/remote
-scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/rollouts ../../tmp/groop/remote
+rem scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/models ../../tmp/groop/remote
+rem scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/rollouts ../../tmp/groop/remote
+
+scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/energy_conservation/models ../../tmp/groop/energy_conservation
+scp -r imori@bayes.ucsd.edu:/home/imori/NNSim/Neural_Simulation/tmp/groop/energy_conservation/rollouts ../../tmp/groop/energy_conservation
 
 rem bash ./learning_to_simulate/download_dataset.sh Goop-3D /home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/groop3d/data
 
@@ -37,3 +40,6 @@ rem --num_rollouts=5 \
 rem --num_steps=3000000 \
 rem --dim=3 \
 rem --batch=1
+
+rem python -m learning_to_simulate.render_rollout \
+rem --rollout_path=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/groop/energy_conservation/rollouts/train_200000/rollout_0.pkl

@@ -97,14 +97,21 @@ rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/extra_features/
 rem --n=120 \
 rem --video
 
-python datagen_mpm_multi.py \
---scene=RiceGripMulti \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Plastic/raw \
---n=500 \
---plastic
+rem python datagen_mpm_multi.py \
+rem --scene=RiceGripMulti \
+rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Plastic/raw \
+rem --n=500 \
+rem --plastic
 
 
+rem python datagen_mpm_multi.py \
+rem --scene=RiceGripMulti \
+rem --out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Elastic/raw \
+rem --offset=41 \
+rem --n=300
+
 python datagen_mpm_multi.py \
 --scene=RiceGripMulti \
---out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/Elastic/raw \
---n=500
+--out=/home/issei/Documents/UCSD/SuLab/Neural_Simulation/tmp/RiceGripMulti/elastoplastic/raw \
+--n=300 \
+--elastoplastic

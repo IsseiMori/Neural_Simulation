@@ -43,6 +43,8 @@ save_steps = args.save_steps
 rollout_steps = args.rollout_steps
 STD_EPSILON = torch.FloatTensor([1e-8]).to(device)
 
+NON_KINEMATIC_ID = 0
+
 data_path = args.data_path
 model_path = args.model_path
 output_path = args.output_path
@@ -505,7 +507,7 @@ def eval_single_rollout(simulator, features, num_steps, device):
     initial_positions = features['position'][:, 0:INPUT_SEQUENCE_LENGTH]
     ground_truth_positions = features['position'][:, INPUT_SEQUENCE_LENGTH:]
     
-    non_kinematic_mask = (features['particle_type'] != 3).clone().detach().to(device)
+    non_kinematic_mask = (features['particle_type'] != NON_KINEMATIC_ID).clone().detach().to(device)
     
     current_positions = initial_positions
     predictions = []
@@ -517,7 +519,7 @@ def eval_single_rollout(simulator, features, num_steps, device):
             global_context=features['step_context'][step] if features['step_context'] != None else None
         ) # (n_nodes, 2)
         # Update kinematic particles from prescribed trajectory
-        kinematic_mask = (features['particle_type'] == 3).clone().detach().to(device)
+        kinematic_mask = (features['particle_type'] == NON_KINEMATIC_ID).clone().detach().to(device)
         next_position_ground_truth = ground_truth_positions[:, step]
         kinematic_mask = kinematic_mask.bool()[:, None].expand(-1, args.dim)
         next_position = torch.where(kinematic_mask, next_position_ground_truth, next_position)
@@ -587,7 +589,7 @@ def one_step_estimator(simulator, features, labels, device, noise_std=0):
     labels = torch.tensor(labels).to(device)
 
     sampled_noise = get_random_walk_noise_for_position_sequence(features['position'], noise_std_last_step=noise_std).to(device)
-    non_kinematic_mask = (features['particle_type'] != 3).clone().detach().to(device)
+    non_kinematic_mask = (features['particle_type'] != NON_KINEMATIC_ID).clone().detach().to(device)
     sampled_noise *= non_kinematic_mask.view(-1, 1, 1)
 
     pred, target = simulator.predict_accelerations(
@@ -711,16 +713,16 @@ def train(simulator):
                 os.makedirs(rollout_path, exist_ok=True)
                 
                 ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='train', is_rollout=True)
-                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
-
+                eval_loss = eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
+                writer.add_scalar("rollout_train", eval_loss, step)
 
             if step % rollout_steps == 0 or (args.force_rollout and is_first_step):
                 rollout_path = os.path.join(output_path, f'test_{step}')
                 os.makedirs(rollout_path, exist_ok=True)
                 
                 ds = prepare_data_from_tfds(os.path.join(data_path, 'rollouts'), split='test', is_rollout=True)
-                eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
-
+                eval_loss = eval_rollout(ds, simulator, rollout_path, num_steps=num_steps, save_results=True, device=device, num_eval_steps=args.num_rollouts)
+                writer.add_scalar("rollout_test", eval_loss, step)
 
             is_first_step = False
 
